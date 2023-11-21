@@ -1,19 +1,21 @@
 import React, { useCallback, useMemo } from 'react';
+import { ErrorBoundary } from '@deephaven/components';
 import Log from '@deephaven/log';
 import { isWidgetPlugin, usePlugins } from '@deephaven/plugin';
-import type { Widget, WidgetExportedObject } from '@deephaven/jsapi-types';
+import type { Widget } from '@deephaven/jsapi-types';
+import { ObjectViewProps } from './ObjectUtils';
 
 const log = Log.module('@deephaven/js-plugin-ui/ObjectView');
-
-export interface ObjectViewProps {
-  object: WidgetExportedObject;
-}
 
 function ObjectView(props: ObjectViewProps) {
   const { object } = props;
   log.info('Object is', object);
 
-  const fetch = useCallback(() => object.fetch() as Promise<Widget>, [object]);
+  const fetch = useCallback(async () => {
+    // We re-export the object in case this object is used in multiple places or closed/opened multiple times
+    const reexportedObject = await object.reexport();
+    return reexportedObject.fetch() as Promise<Widget>;
+  }, [object]);
 
   const plugins = usePlugins();
 
@@ -33,7 +35,11 @@ function ObjectView(props: ObjectViewProps) {
   if (plugin != null) {
     const Component = plugin.component;
     // eslint-disable-next-line react/jsx-props-no-spreading
-    return <Component {...props} fetch={fetch} />;
+    return (
+      <ErrorBoundary>
+        <Component {...props} fetch={fetch} />
+      </ErrorBoundary>
+    );
   }
 
   log.warn('Unknown object type', object.type);
