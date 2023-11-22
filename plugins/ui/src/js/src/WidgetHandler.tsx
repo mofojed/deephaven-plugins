@@ -50,7 +50,7 @@ function WidgetHandler({ onClose, widget: wrapper }: WidgetHandlerProps) {
         ? new JSONRPCServerAndClient(
             new JSONRPCServer(),
             new JSONRPCClient(request => {
-              log.debug('Sending request', request);
+              log.debug('Sending request example', request);
               widget.sendMessage(JSON.stringify(request), []);
             })
           )
