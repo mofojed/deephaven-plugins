@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, Dict
+from typing import Any, Callable
 from deephaven.table import Table
 from .Element import Element
 from .._internal import dict_to_camel_case, RenderContext
@@ -9,7 +9,7 @@ from .._internal import dict_to_camel_case, RenderContext
 logger = logging.getLogger(__name__)
 
 RowIndex = int
-RowDataMap = Dict[str, Any]
+RowDataMap = dict[str, Any]
 
 
 class UITable(Element):
