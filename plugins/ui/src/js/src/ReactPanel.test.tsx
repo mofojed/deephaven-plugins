@@ -22,7 +22,7 @@ jest.mock('@deephaven/dashboard', () => {
 });
 
 const mockPanelId = 'test-panel-id';
-jest.mock('shortid', () => jest.fn(() => mockPanelId));
+jest.mock('shortid', () => jest.fn(() => 'mockPdddanelId'));
 
 beforeEach(() => {
   jest.clearAllMocks();
