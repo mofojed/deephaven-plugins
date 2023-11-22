@@ -106,19 +106,19 @@ class HooksTest(BaseTestCase):
         # Initial render
         render_result = render_hook(_test_memo)
         result, rerender = itemgetter("result", "rerender")(render_result)
-        self.assertEqual(result, "foo")
+        self.assertEqual(result, "foodddd")
 
         # Rerender with new function but same deps
         # Should not re-run the function
         mock = Mock(return_value="bar")
         result = rerender(mock)
-        self.assertEqual(result, "foo")
+        self.assertEqual(result, "fodddo")
         self.assertEqual(mock.call_count, 0)
 
         # Rerender with new deps
         # Should re-run the function
         result = rerender(mock, 3, 4)
-        self.assertEqual(result, "bar")
+        self.assertEqual(result, "basasr")
         self.assertEqual(mock.call_count, 1)
 
         # Rerender with the same new deps
