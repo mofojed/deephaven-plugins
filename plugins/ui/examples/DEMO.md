@@ -153,8 +153,9 @@ sti = stock_table_input(stocks, "CAT", "TPET")
 You can also take action when a button is clicked. In this example, we have a simple form that user can enter orders and submit:
 
 ```python
-from deephaven import dtypes as dht, input_table, new_table, ui
-from deephaven.column import string_col, int_col
+from deephaven import dtypes as dht, empty_table, ui
+from deephaven.stream.table_publisher import table_publisher
+from deephaven.stream import blink_to_append_only
 
 
 @ui.component
@@ -162,27 +163,38 @@ def order_table():
     sym, set_sym = ui.use_state("")
     size, set_size = ui.use_state(0)
 
-    t = ui.use_memo(
-        lambda: input_table(col_defs={"sym": dht.string, "size": dht.int32}), []
+    blink_table, publisher = ui.use_memo(
+        lambda: table_publisher(
+            "Order table", {"sym": dht.string, "size": dht.int32, "side": dht.string}
+        ),
+        [],
     )
+    t = ui.use_memo(lambda: blink_to_append_only(blink_table), [blink_table])
 
-    def submit_order(order_sym, order_size):
-        t.add(
-            new_table([string_col("sym", [order_sym]), int_col("size", [order_size])])
+    def submit_order(order_sym, order_size, side):
+        publisher.add(
+            empty_table(1).update(
+                [f"sym=`{order_sym}`", f"size={order_size}", f"side=`{side}`"]
+            )
         )
 
     def handle_buy():
-        submit_order(sym, size)
+        submit_order(sym, size, "buy")
 
     def handle_sell():
-        submit_order(sym, -size)
+        submit_order(sym, size, "sell")
 
     return ui.panel(
         ui.flex(
-            ui.text_field(value=sym, on_change=set_sym),
-            ui.number_field(value=size, on_change=set_size),
+            ui.text_field(
+                label="Sym", label_position="side", value=sym, on_change=set_sym
+            ),
+            ui.number_field(
+                label="Size", label_position="side", value=size, on_change=set_size
+            ),
             ui.button("Buy", on_press=handle_buy, variant="accent", style="fill"),
             ui.button("Sell", on_press=handle_sell, variant="negative", style="fill"),
+            gap=20,
         ),
         t,
         title="Order Table",
