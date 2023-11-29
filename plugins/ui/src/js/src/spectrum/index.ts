@@ -6,6 +6,7 @@
  */
 export { default as ActionButton } from './ActionButton';
 export { default as Button } from './Button';
+export { default as NumberField } from './NumberField';
 export { default as RangeSlider } from './RangeSlider';
 export { default as Slider } from './Slider';
 export { default as TextField } from './TextField';

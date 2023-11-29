@@ -16,6 +16,7 @@ import { ValueOf } from '@deephaven/utils';
 import {
   ActionButton,
   Button,
+  NumberField,
   RangeSlider,
   Slider,
   TextField,
@@ -35,6 +36,7 @@ export const SpectrumSupportedTypes = {
   Heading,
   Icon,
   IllustratedMessage,
+  NumberField,
   RangeSlider,
   Slider,
   Switch,

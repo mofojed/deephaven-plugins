@@ -20,6 +20,7 @@ __all__ = [
     "icon_wrapper",
     "illustrated_message",
     "html",
+    "number_field",
     "panel",
     "range_slider",
     "slider",

@@ -83,6 +83,14 @@ def illustrated_message(*children, **props):
     return spectrum_element("IllustratedMessage", *children, **props)
 
 
+def number_field(*children, **props):
+    """
+    Python implementation for the Adobe React Spectrum NumberField component.
+    https://react-spectrum.adobe.com/react-spectrum/NumberField.html
+    """
+    return spectrum_element("NumberField", *children, **props)
+
+
 def range_slider(*children, **props):
     """
     Python implementation for the Adobe React Spectrum RangeSlider component.
