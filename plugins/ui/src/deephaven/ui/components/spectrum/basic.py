@@ -25,6 +25,14 @@ def button(*children, **props):
     return spectrum_element("Button", *children, **props)
 
 
+def button_group(*children, **props):
+    """
+    Python implementation for the Adobe React Spectrum ButtonGroup component.
+    https://react-spectrum.adobe.com/react-spectrum/ButtonGroup.html
+    """
+    return spectrum_element("ButtonGroup", *children, **props)
+
+
 def checkbox(*children, **props):
     """
     Python implementation for the Adobe React Spectrum Checkbox component.
@@ -81,6 +89,14 @@ def illustrated_message(*children, **props):
     https://react-spectrum.adobe.com/react-spectrum/IllustratedMessage.html
     """
     return spectrum_element("IllustratedMessage", *children, **props)
+
+
+def form(*children, **props):
+    """
+    Python implementation for the Adobe React Spectrum Form component.
+    https://react-spectrum.adobe.com/react-spectrum/Form.html
+    """
+    return spectrum_element("Form", *children, **props)
 
 
 def number_field(*children, **props):
