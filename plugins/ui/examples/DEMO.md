@@ -1,6 +1,8 @@
 # deephaven.ui
 
-deephaven.ui is a plugin for Deephaven that allows for programmatic layouts and callbacks. It uses a React-like approach to building components and rendering them in the UI, allowing for creating reactive components that can be re-used and composed together, as well as reacting to user input from the UI.
+## A Python web framework for building real-time data focused apps
+
+Deephaven is a new framework for building reactive UI components for real-time data apps, entirely in Python. No front-end engineering needed. Users can turn kafka feeds, event streams, and data lakes into live BI dashboards and data apps in minutes, not days. The new python framework, deephaven.ui, allows users to build interactive interfaces composed of reactive components and includes a library of pre-built real-time data compatible components.
 
 Below are some examples to demonstrate some of the functionality you can do so far with deephaven.ui. At this point it is only showcasing the subset of the planned functionality that has been implemented, but should give an idea of what is possible.
 
@@ -12,7 +14,7 @@ from deephaven import ui
 
 # Basic `use_state` Examples
 
-deephaven.ui uses functional components with "hooks" to create components. The most useful and basic hook is the `use_state` hook, which allows you to create a stateful component. The `use_state` hook returns a tuple of the current value of the state and a function to update the state. The function returned by `use_state` can be called with a new value to update the state, and the component will re-render with the new value. People familiar with React will be familiar with this paradigm.
+deephaven.ui uses functional components with "hooks" to create components. The most useful and basic hook is the `use_state` hook, which allows you to create a stateful component. The `use_state` hook returns a tuple of the current value of the state and a function to update the state. The function returned by `use_state` can be called with a new value to update the state, and the component will re-render with the new value. People familiar with modern UI frameworks will be familiar with this paradigm.
 
 The below examples show a simple usage of the `use_state` hook, building some of the basic examples on the [React useState docs](https://react.dev/reference/react/useState#examples-basic).
 
@@ -57,11 +59,19 @@ mi = my_input()
 
 You can open a Deephaven Table and control it using callbacks, as well. Let\'s create a table with some data, and then create a component that allows us to filter the table, and a button group it or ungroup it.
 
+We're going to use a sample table of mock data for demonstration purposes:
+
 ```python
 from deephaven.plot import express as dx
-from deephaven import agg
 
-stocks = dx.data.stocks()
+stocks = dx.data.stocks().reverse()
+# stocks creates a fictional stock market of pets
+```
+
+Then we can use that source table to create a groupable table component:
+
+```python
+from deephaven import agg
 
 
 @ui.component
@@ -79,7 +89,8 @@ def groupable_table(source, column, aggs, default_value=""):
                 label="Sym",
                 label_position="side",
             ),
-            ui.toggle_button(ui.icon("vsSymbolMisc"), "Group", on_change=set_grouped),
+            ui.toggle_button(ui.text("Group"), on_change=set_grouped),
+            gap=10,
         ),
         t if not grouped else t.rollup(aggs=aggs, by=column),
         direction="column",
@@ -87,12 +98,12 @@ def groupable_table(source, column, aggs, default_value=""):
     )
 
 
-mt = groupable_table(stocks, "sym", agg.avg(cols=["size", "price", "dollars"]), "fish")
+gt = groupable_table(stocks, "sym", agg.avg(cols=["size", "price", "dollars"]), "fish")
 ```
 
 ## Using Plots
 
-We can display a plot instead of tables as well. Let\'s create a plot that shows the average price of each symbol over time.
+We can display a plot instead of tables as well. Let\'s create a plot using plotly that shows the average price of each symbol over time.
 
 ```python
 @ui.component
@@ -101,17 +112,15 @@ def filterable_plot(source):
 
     t = source.where(f"sym.contains(`{value.upper()}`)")
 
-    return ui.flex(
+    return [
         ui.text_field(
             value=value,
             on_change=set_value,
             label="Sym",
             label_position="side",
         ),
-        dx.line(t, x="timestamp", y="price", by=["sym"]),
-        direction="column",
-        flex_grow=1,
-    )
+        dx.line(t, x="timestamp", y="price", by=["exchange"]),
+    ]
 
 
 fp = filterable_plot(stocks)
@@ -119,7 +128,7 @@ fp = filterable_plot(stocks)
 
 ## Table Actions
 
-You can react to clicks in a table as well. Let\'s display a table that when you double click on a row, will filter a table and plot in another panel to show just that symbol:
+You can react to a wide variety of user actions in a table as well. Let\'s display a table that when you double click on a row, will filter a table and plot in another panel to show just that symbol:
 
 ```python
 @ui.component
@@ -127,7 +136,7 @@ def stock_table_input(source, default_sym="", default_exchange=""):
     sym, set_sym = ui.use_state(default_sym)
     exchange, set_exchange = ui.use_state(default_exchange)
 
-    t1 = source
+    t1 = source.select_distinct(["sym", "exchange"])
     t2 = source.where([f"sym=`{sym.upper()}`", f"exchange=`{exchange}`"])
     p = dx.line(t2, x="timestamp", y="price")
 
@@ -137,6 +146,7 @@ def stock_table_input(source, default_sym="", default_exchange=""):
 
     return [
         ui.panel(
+            # Add a callback for when user double clicks a row in the table
             ui.table(t1).on_row_double_press(handle_row_double_press),
             title="Stock Table Input",
         ),
@@ -146,6 +156,47 @@ def stock_table_input(source, default_sym="", default_exchange=""):
 
 
 sti = stock_table_input(stocks, "CAT", "TPET")
+```
+
+## Ranged Components
+
+deephaven.ui contains a library of elements you can use to build your own components. For example, you can create a histogram that you can modify the bin count and range using sliders:
+
+```python
+@ui.component
+def hist_demo(source, column):
+    bin_count, set_bin_count = ui.use_state(10)
+    hist_range, set_hist_range = ui.use_state({"start": 0, "end": 100000})
+
+    p = ui.use_memo(
+        lambda: dx.histogram(
+            source.where(
+                f"{column}>={hist_range['start']} && {column}<={hist_range['end']}"
+            ),
+            x=column,
+            nbins=bin_count,
+        ),
+        [bin_count, hist_range, source, column],
+    )
+
+    return [
+        ui.flex(
+            ui.slider(label="Bin Count", value=bin_count, on_change=set_bin_count),
+            ui.range_slider(
+                label="Range",
+                value=hist_range,
+                on_change=set_hist_range,
+                min_value=0,
+                max_value=100000,
+            ),
+            gap=20,
+            margin=20,
+        ),
+        p,
+    ]
+
+
+hd = hist_demo(stocks, "size")
 ```
 
 ## Creating an Order Table
@@ -194,7 +245,8 @@ def order_table():
             ),
             ui.button("Buy", on_press=handle_buy, variant="accent", style="fill"),
             ui.button("Sell", on_press=handle_sell, variant="negative", style="fill"),
-            gap=20,
+            gap=10,
+            wrap=True,
         ),
         t,
         title="Order Table",
