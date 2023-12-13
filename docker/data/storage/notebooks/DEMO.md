@@ -278,12 +278,6 @@ You can add [Tabs](https://react-spectrum.adobe.com/react-spectrum/Tabs.html) wi
 - Table filtered on sym `DOG`
 
 ```python
-from deephaven import ui
-from deephaven.plot import express as dx
-
-stocks = dx.data.stocks()
-
-
 @ui.component
 def table_tabs(source):
     return ui.panel(
@@ -303,5 +297,5 @@ def table_tabs(source):
     )
 
 
-tt = table_tabs(stocks)
+result = table_tabs(stocks)
 ```
