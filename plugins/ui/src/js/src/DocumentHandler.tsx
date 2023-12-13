@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useRef } from 'react';
+import { ErrorBoundary } from '@deephaven/components';
 import { WidgetDefinition } from '@deephaven/dashboard';
 import Log from '@deephaven/log';
 import { ReactPanelManagerContext } from './ReactPanelManager';
@@ -62,9 +63,16 @@ function DocumentHandler({
   );
 
   return (
-    <ReactPanelManagerContext.Provider value={panelManager}>
-      {getRootChildren(children, definition)}
-    </ReactPanelManagerContext.Provider>
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        // ErrorBoundary will log the error, and the document is going to automatically unmount
+        // TODO (web-client-ui#1691): We should trigger a toast notification for this error so the user knows something happened.
+      }}
+    >
+      <ReactPanelManagerContext.Provider value={panelManager}>
+        {getRootChildren(children, definition)}
+      </ReactPanelManagerContext.Provider>
+    </ErrorBoundary>
   );
 }
 

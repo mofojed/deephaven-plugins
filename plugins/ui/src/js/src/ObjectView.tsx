@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
+import { ErrorBoundary } from '@deephaven/components';
 import Log from '@deephaven/log';
 import { isWidgetPlugin, usePlugins } from '@deephaven/plugin';
 import type { Widget } from '@deephaven/jsapi-types';
@@ -34,7 +35,11 @@ function ObjectView(props: ObjectViewProps) {
   if (plugin != null) {
     const Component = plugin.component;
     // eslint-disable-next-line react/jsx-props-no-spreading
-    return <Component {...props} fetch={fetch} />;
+    return (
+      <ErrorBoundary>
+        <Component {...props} fetch={fetch} />
+      </ErrorBoundary>
+    );
   }
 
   log.warn('Unknown object type', object.type);
