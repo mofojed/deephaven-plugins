@@ -66,8 +66,11 @@ class ElementMessageStream(MessageStream):
 
         def update():
             logger.debug("ElementMessageStream update")
-            node = renderer.render(self._element)
-            self._send_document_update(node)
+            try:
+                node = renderer.render(self._element)
+                self._send_document_update(node)
+            except Exception as e:
+                self._send_error(e)
 
         context.set_on_change(update)
         update()
@@ -79,14 +82,17 @@ class ElementMessageStream(MessageStream):
         decoded_payload = io.BytesIO(payload).read().decode()
         logger.debug("Payload received: %s", decoded_payload)
 
-        response = self._manager.handle(decoded_payload, self._dispatcher)
+        try:
+            response = self._manager.handle(decoded_payload, self._dispatcher)
 
-        if response is None:
-            return
+            if response is None:
+                return
 
-        response_payload = response.json
-        logger.debug("Response: %s, %s", type(response_payload), response_payload)
-        self._connection.on_data(response_payload.encode(), [])
+            response_payload = response.json
+            logger.debug("Response: %s, %s", type(response_payload), response_payload)
+            self._connection.on_data(response_payload.encode(), [])
+        except Exception as e:
+            self._send_error(e)
 
     def _get_next_message_id(self) -> int:
         self._message_id += 1
@@ -120,6 +126,18 @@ class ElementMessageStream(MessageStream):
             "params": params,
             "id": self._get_next_message_id(),
         }
+
+    def _send_error(self, error: Exception) -> None:
+        """
+        Send an error to the client.
+
+        Args:
+            error: The error to send
+        """
+        request = self._make_notification("documentError", str(error))
+        payload = json.dumps(request)
+        logger.debug(f"Sending error payload: {payload}")
+        self._connection.on_data(payload.encode(), [])
 
     def _send_document_update(self, root: RenderedNode) -> None:
         """

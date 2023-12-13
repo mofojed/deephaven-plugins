@@ -160,6 +160,10 @@ function WidgetHandler({ onClose, widget: wrapper }: WidgetHandlerProps) {
         const newDocument = parseDocument(params[0]);
         setDocument(newDocument);
       });
+      jsonClient.addMethod('documentError', async (params: [string]) => {
+        log.warn('documentError', params[0]);
+        // TODO (web-client-ui#1691): We should trigger a toast notification for this error so the user knows something happened.
+      });
 
       return () => {
         jsonClient.rejectAllPendingRequests('Widget was changed');
