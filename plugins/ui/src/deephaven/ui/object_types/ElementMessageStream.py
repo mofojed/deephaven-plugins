@@ -70,6 +70,7 @@ class ElementMessageStream(MessageStream):
                 node = renderer.render(self._element)
                 self._send_document_update(node)
             except Exception as e:
+                logger.exception(e)
                 self._send_error(e)
 
         context.set_on_change(update)
