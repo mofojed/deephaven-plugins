@@ -181,14 +181,6 @@ export function DashboardPlugin(
     supportedTypes: [],
   });
 
-  useEffect(() => {
-    const cleanups = [registerComponent(PortalPanel.displayName, PortalPanel)];
-
-    return () => {
-      cleanups.forEach(cleanup => cleanup());
-    };
-  }, [registerComponent]);
-
   // TODO: We need to change up the event system for how objects are opened, since in this case it could be opening multiple panels
   useListener(layout.eventHub, PanelEvent.OPEN, handlePanelOpen);
   useListener(layout.eventHub, PanelEvent.CLOSE, handlePanelClose);
