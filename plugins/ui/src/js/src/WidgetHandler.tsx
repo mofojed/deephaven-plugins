@@ -26,7 +26,7 @@ import {
 import { WidgetMessageEvent, WidgetWrapper } from './WidgetTypes';
 import DocumentHandler from './DocumentHandler';
 import { getComponentForElement } from './WidgetUtils';
-import ScopedIDWrapper from './elements/ScopedIDWrapper';
+import ScopedIDWrapper from './elements/ScopedIdWrapper';
 
 const log = Log.module('@deephaven/js-plugin-ui/WidgetHandler');
 
@@ -104,11 +104,7 @@ function WidgetHandler({ onClose, widget: wrapper }: WidgetHandlerProps) {
         if (isElementNode(value)) {
           // Replace the elements node with the Component it maps to
           try {
-            return (
-              <ScopedIDWrapper id={key}>
-                {getComponentForElement(value)}
-              </ScopedIDWrapper>
-            );
+            return getComponentForElement(value);
           } catch (e) {
             log.warn('Error getting component for element', e);
             return value;
@@ -248,9 +244,14 @@ function WidgetHandler({ onClose, widget: wrapper }: WidgetHandlerProps) {
   return useMemo(
     () =>
       document != null ? (
-        <DocumentHandler widget={wrapper.widget} onClose={handleDocumentClose}>
-          {document}
-        </DocumentHandler>
+        <ScopedIDWrapper id={wrapper.id}>
+          <DocumentHandler
+            widget={wrapper.widget}
+            onClose={handleDocumentClose}
+          >
+            {document}
+          </DocumentHandler>
+        </ScopedIDWrapper>
       ) : null,
     [document, handleDocumentClose, wrapper]
   );

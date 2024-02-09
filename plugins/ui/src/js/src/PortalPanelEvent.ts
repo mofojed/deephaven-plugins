@@ -10,7 +10,7 @@ export const PORTAL_OPENED = 'PortalPanelEvent.PORTAL_OPENED';
  */
 export const PORTAL_CLOSED = 'PortalPanelEvent.PORTAL_CLOSED';
 
-export interface ElementOpenedPayload {
+export interface PortalOpenedPayload {
   /** Golden Layout Container object. Can use the panel ID to identify this panel. */
   container: DashboardPanelProps['glContainer'];
 
@@ -18,35 +18,63 @@ export interface ElementOpenedPayload {
   element: HTMLElement;
 }
 
+/**
+ * Listen for portal panel opened events
+ * @param eventHub The event hub to listen to
+ * @param handler The handler to call when a portal panel is opened
+ * @returns A function to stop listening for portal panel opened events
+ */
 export function listenForPortalOpened(
   eventHub: DashboardPanelProps['glEventHub'],
-  handler: (p: ElementOpenedPayload) => void
-): void {
+  handler: (p: PortalOpenedPayload) => void
+): () => void {
   eventHub.on(PORTAL_OPENED, handler);
+  return () => {
+    eventHub.off(PORTAL_OPENED, handler);
+  };
 }
 
+/**
+ * Emit a portal panel opened event
+ * @param eventHub The event hub to emit the event on
+ * @param payload The payload to emit
+ */
 export function emitPortalOpened(
   eventHub: DashboardPanelProps['glEventHub'],
-  payload: ElementOpenedPayload
+  payload: PortalOpenedPayload
 ): void {
   eventHub.emit(PORTAL_OPENED, payload);
 }
 
-export interface ElementClosedPayload {
+export interface PortalClosedPayload {
   /** Golden Layout Container object. Can use the panel ID to identify this panel. */
   container: DashboardPanelProps['glContainer'];
 }
 
+/**
+ * Listen for portal panel closed events
+ * @param eventHub The event hub to listen to
+ * @param handler The handler to call when a portal panel is closed
+ * @returns A function to stop listening for portal panel closed events
+ */
 export function listenForPortalClosed(
   eventHub: DashboardPanelProps['glEventHub'],
-  handler: (p: ElementClosedPayload) => void
-): void {
+  handler: (p: PortalClosedPayload) => void
+): () => void {
   eventHub.on(PORTAL_CLOSED, handler);
+  return () => {
+    eventHub.off(PORTAL_CLOSED, handler);
+  };
 }
 
+/**
+ * Emit a portal panel closed event
+ * @param eventHub The event hub to emit the event on
+ * @param payload The payload to emit
+ */
 export function emitPortalClosed(
   eventHub: DashboardPanelProps['glEventHub'],
-  payload: ElementClosedPayload
+  payload: PortalClosedPayload
 ): void {
   eventHub.emit(PORTAL_CLOSED, payload);
 }

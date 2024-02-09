@@ -19,6 +19,11 @@ import { useReactPanelManager } from './ReactPanelManager';
 import { ReactPanelProps } from './layout/LayoutUtils';
 import { useParentItem } from './layout/ParentItemContext';
 import { ReactPanelContext } from './ReactPanelContext';
+import { useScopedId } from './elements/useScopedId';
+import {
+  listenForPortalClosed,
+  listenForPortalOpened,
+} from './PortalPanelEvent';
 
 const log = Log.module('@deephaven/js-plugin-ui/ReactPanel');
 
@@ -29,11 +34,13 @@ function ReactPanel({ children, title }: ReactPanelProps) {
   const layoutManager = useLayoutManager();
   const panelManager = useReactPanelManager();
   const { metadata, onClose, onOpen } = panelManager;
-  const panelId = useMemo(() => shortid(), []);
+  const scopeId = useMemo(() => shortid(), []);
+  const panelId = useScopedId(scopeId);
   const [element, setElement] = useState<HTMLElement>();
   const isPanelOpenRef = useRef(false);
   const openedMetadataRef = useRef<Record<string, unknown>>();
   const parent = useParentItem();
+  const { eventHub } = layoutManager;
 
   log.debug2('Rendering panel', panelId);
 
@@ -60,7 +67,28 @@ function ReactPanel({ children, title }: ReactPanelProps) {
     [onClose, panelId]
   );
 
-  useListener(layoutManager.eventHub, PanelEvent.CLOSED, handlePanelClosed);
+  useListener(eventHub, PanelEvent.CLOSED, handlePanelClosed);
+
+  useEffect(
+    () =>
+      listenForPortalOpened(eventHub, ({ container, element: newElement }) => {
+        if (LayoutUtils.getIdFromContainer(container) === panelId) {
+          setElement(newElement);
+        }
+      }),
+    [eventHub, panelId]
+  );
+
+  useEffect(
+    () =>
+      listenForPortalClosed(eventHub, ({ container }) => {
+        if (LayoutUtils.getIdFromContainer(container) === panelId) {
+          isPanelOpenRef.current = false;
+          setElement(undefined);
+        }
+      }),
+    [eventHub, panelId]
+  );
 
   useEffect(() => {
     if (
@@ -74,11 +102,6 @@ function ReactPanel({ children, title }: ReactPanelProps) {
         component: PortalPanel.displayName,
         props: {
           id: panelId,
-          onClose: () => {
-            isPanelOpenRef.current = false;
-            setElement(undefined);
-          },
-          onOpen: setElement,
           metadata,
         },
         title: panelTitle,
