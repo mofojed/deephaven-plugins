@@ -1,4 +1,5 @@
-import { createContext, useContext } from 'react';
+import { useContextOrThrow } from '@deephaven/react-hooks';
+import { createContext } from 'react';
 
 export type ReactPanelManager = {
   /**
@@ -13,14 +14,22 @@ export type ReactPanelManager = {
 
   /** Triggered when a panel is closed */
   onClose: (panelId: string) => void;
+
+  /**
+   * Get a panelId from the panel manager.
+   * Return a known panel ID if this is a rehydration, otherwise
+   * generate a new panelId if this is a new render or there are no IDs left.
+   * */
+  getPanelId: () => string;
 };
 
-export const ReactPanelManagerContext = createContext<ReactPanelManager>({
-  metadata: { name: '', type: '' },
-  onOpen: () => undefined,
-  onClose: () => undefined,
-});
+export const ReactPanelManagerContext = createContext<ReactPanelManager | null>(
+  null
+);
 
 export function useReactPanelManager(): ReactPanelManager {
-  return useContext(ReactPanelManagerContext);
+  return useContextOrThrow(
+    ReactPanelManagerContext,
+    'No ReactPanelManager found, did you wrap in a ReactPanelManagerProvider.Context?'
+  );
 }

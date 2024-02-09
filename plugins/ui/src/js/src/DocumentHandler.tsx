@@ -1,14 +1,19 @@
 import React, { useCallback, useMemo, useRef } from 'react';
+import shortid from 'shortid';
 import { WidgetDescriptor } from '@deephaven/dashboard';
 import Log from '@deephaven/log';
 import { ReactPanelManagerContext } from './ReactPanelManager';
 import { getRootChildren } from './DocumentUtils';
+import { EMPTY_ARRAY } from '@deephaven/utils';
 
 const log = Log.module('@deephaven/js-plugin-ui/DocumentHandler');
 
 export type DocumentHandlerProps = React.PropsWithChildren<{
   /** Definition of the widget used to create this document. Used for titling panels if necessary. */
   widget: WidgetDescriptor;
+
+  /** IDs of the panels to use for this document. */
+  panelIds?: readonly string[];
 
   /** Triggered when all panels opened from this document have closed */
   onClose?: () => void;
@@ -20,9 +25,15 @@ export type DocumentHandlerProps = React.PropsWithChildren<{
  * or all non-panels, which will automatically be wrapped in one panel.
  * Responsible for opening any panels or dashboards specified in the document.
  */
-function DocumentHandler({ children, widget, onClose }: DocumentHandlerProps) {
+function DocumentHandler({
+  children,
+  widget,
+  panelIds = EMPTY_ARRAY,
+  onClose,
+}: DocumentHandlerProps) {
   log.debug('Rendering document', widget);
   const panelOpenCountRef = useRef(0);
+  const panelIdIndex = useRef(0);
 
   const metadata = useMemo(
     () => ({
@@ -48,13 +59,20 @@ function DocumentHandler({ children, widget, onClose }: DocumentHandlerProps) {
     }
   }, [onClose]);
 
+  const getPanelId = useCallback(() => {
+    const panelId = panelIds[panelIdIndex.current] ?? shortid();
+    panelIdIndex.current += 1;
+    return panelId;
+  }, [panelIds]);
+
   const panelManager = useMemo(
     () => ({
       metadata,
       onOpen: handleOpen,
       onClose: handleClose,
+      getPanelId,
     }),
-    [metadata, handleClose, handleOpen]
+    [metadata, getPanelId, handleClose, handleOpen]
   );
 
   return (

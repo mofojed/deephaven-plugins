@@ -1,12 +1,5 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
-import shortid from 'shortid';
 import {
   LayoutUtils,
   PanelEvent,
@@ -33,9 +26,8 @@ const log = Log.module('@deephaven/js-plugin-ui/ReactPanel');
 function ReactPanel({ children, title }: ReactPanelProps) {
   const layoutManager = useLayoutManager();
   const panelManager = useReactPanelManager();
-  const { metadata, onClose, onOpen } = panelManager;
-  const scopeId = useMemo(() => shortid(), []);
-  const panelId = useScopedId(scopeId);
+  const { metadata, onClose, onOpen, getPanelId } = panelManager;
+  const panelId = useScopedId(getPanelId);
   const [element, setElement] = useState<HTMLElement>();
   const isPanelOpenRef = useRef(false);
   const openedMetadataRef = useRef<Record<string, unknown>>();
