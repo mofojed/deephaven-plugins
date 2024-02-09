@@ -1,10 +1,11 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import shortid from 'shortid';
 import { WidgetDescriptor } from '@deephaven/dashboard';
 import Log from '@deephaven/log';
+import { EMPTY_ARRAY, EMPTY_FUNCTION } from '@deephaven/utils';
 import { ReactPanelManagerContext } from './ReactPanelManager';
 import { getRootChildren } from './DocumentUtils';
-import { EMPTY_ARRAY } from '@deephaven/utils';
+import { WidgetData } from './WidgetTypes';
 
 const log = Log.module('@deephaven/js-plugin-ui/DocumentHandler');
 
@@ -12,8 +13,11 @@ export type DocumentHandlerProps = React.PropsWithChildren<{
   /** Definition of the widget used to create this document. Used for titling panels if necessary. */
   widget: WidgetDescriptor;
 
-  /** IDs of the panels to use for this document. */
-  panelIds?: readonly string[];
+  /** Data that was saved previously when this widget was opened */
+  data?: WidgetData;
+
+  /** Triggered when the data in the document changes */
+  onDataChange?: (data: WidgetData) => void;
 
   /** Triggered when all panels opened from this document have closed */
   onClose?: () => void;
@@ -28,12 +32,15 @@ export type DocumentHandlerProps = React.PropsWithChildren<{
 function DocumentHandler({
   children,
   widget,
-  panelIds = EMPTY_ARRAY,
+  data = {},
+  onDataChange = EMPTY_FUNCTION,
   onClose,
 }: DocumentHandlerProps) {
   log.debug('Rendering document', widget);
   const panelOpenCountRef = useRef(0);
   const panelIdIndex = useRef(0);
+  const documentData = useRef(data);
+  const { panelIds = EMPTY_ARRAY } = data;
 
   const metadata = useMemo(
     () => ({
@@ -43,21 +50,49 @@ function DocumentHandler({
     [widget]
   );
 
-  const handleOpen = useCallback(() => {
-    panelOpenCountRef.current += 1;
-    log.debug('Panel opened, open count', panelOpenCountRef.current);
-  }, []);
+  const initializeData = useCallback(() => {
+    if (documentData.current == null) {
+      documentData.current = {};
+    }
+    if (documentData.current.panelIds == null) {
+      documentData.current.panelIds = [];
+    }
+  }, [documentData]);
 
-  const handleClose = useCallback(() => {
-    panelOpenCountRef.current -= 1;
-    if (panelOpenCountRef.current < 0) {
-      throw new Error('Panel open count is negative');
-    }
-    log.debug('Panel closed, open count', panelOpenCountRef.current);
-    if (panelOpenCountRef.current === 0) {
-      onClose?.();
-    }
-  }, [onClose]);
+  const handleOpen = useCallback(
+    (panelId: string) => {
+      panelOpenCountRef.current += 1;
+      log.debug('Panel opened, open count', panelOpenCountRef.current);
+
+      initializeData();
+      const newPanelIds = [...(documentData.current.panelIds ?? []), panelId];
+      documentData.current.panelIds = newPanelIds;
+      onDataChange(documentData.current);
+    },
+    [initializeData, onDataChange]
+  );
+
+  const handleClose = useCallback(
+    (panelId: string) => {
+      panelOpenCountRef.current -= 1;
+      if (panelOpenCountRef.current < 0) {
+        throw new Error('Panel open count is negative');
+      }
+      log.debug('Panel closed, open count', panelOpenCountRef.current);
+      if (panelOpenCountRef.current === 0) {
+        onClose?.();
+        return;
+      }
+
+      initializeData();
+      const newPanelIds = [...(documentData.current.panelIds ?? [])].filter(
+        id => id !== panelId
+      );
+      documentData.current.panelIds = newPanelIds;
+      onDataChange(documentData.current);
+    },
+    [initializeData, onClose, onDataChange]
+  );
 
   const getPanelId = useCallback(() => {
     const panelId = panelIds[panelIdIndex.current] ?? shortid();

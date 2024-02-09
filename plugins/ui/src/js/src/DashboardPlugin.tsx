@@ -20,9 +20,10 @@ import {
 import { Widget } from '@deephaven/jsapi-types';
 import { ErrorBoundary } from '@deephaven/components';
 import styles from './styles.scss?inline';
-import { WidgetId, WidgetWrapper } from './WidgetTypes';
+import { WidgetData, WidgetId, WidgetWrapper } from './WidgetTypes';
 import PortalPanel from './PortalPanel';
 import WidgetHandler from './WidgetHandler';
+import { useDebouncedCallback } from '@deephaven/react-hooks';
 
 const NAME_ELEMENT = 'deephaven.ui.Element';
 const DASHBOARD_ELEMENT = 'deephaven.ui.Dashboard';
@@ -39,7 +40,7 @@ interface DashboardPluginData {
     WidgetId,
     {
       descriptor: WidgetDescriptor;
-      panelIds: string[];
+      data?: WidgetData;
     }
   >;
 }
@@ -78,7 +79,6 @@ export function DashboardPlugin(
           fetch,
           id: widgetId,
           widget,
-          panelIds: [],
         });
         return newWidgetMap;
       });
@@ -137,6 +137,7 @@ export function DashboardPlugin(
   useEffect(
     function loadInitialPluginData() {
       if (initialPluginData == null) {
+        log.info('loadInitialPluginData no data');
         return;
       }
 
@@ -148,12 +149,12 @@ export function DashboardPlugin(
         const widgetIds = Object.keys(openWidgets);
         for (let i = 0; i < widgetIds.length; i += 1) {
           const widgetId = widgetIds[i];
-          const { descriptor, panelIds } = openWidgets[widgetId];
+          const { descriptor, data } = openWidgets[widgetId];
           newWidgetMap.set(widgetId, {
             fetch: () => objectFetcher(descriptor),
             id: widgetId,
             widget: descriptor,
-            panelIds,
+            data,
           });
         }
         return newWidgetMap;
@@ -195,6 +196,19 @@ export function DashboardPlugin(
   useListener(layout.eventHub, PanelEvent.OPEN, handlePanelOpen);
   useListener(layout.eventHub, PanelEvent.CLOSE, handlePanelClose);
 
+  const sendPluginDataUpdate = useCallback(
+    (newPluginData: DashboardPluginData) => {
+      log.debug('sendPluginDataUpdate', newPluginData);
+      setPluginData(newPluginData);
+    },
+    []
+  );
+
+  const debouncedSendPluginDataUpdate = useDebouncedCallback(
+    sendPluginDataUpdate,
+    500
+  );
+
   useEffect(
     function updatePluginData() {
       // Updates the plugin data with the widgets that are now open in this dashboard
@@ -202,12 +216,31 @@ export function DashboardPlugin(
       widgetMap.forEach((widgetWrapper, widgetId) => {
         openWidgets[widgetId] = {
           descriptor: widgetWrapper.widget,
-          panelIds: [],
+          data: widgetWrapper.data,
         };
       });
-      setPluginData({ openWidgets });
+      const newPluginData = { openWidgets };
+      debouncedSendPluginDataUpdate(newPluginData);
     },
-    [widgetMap, setPluginData]
+    [widgetMap, debouncedSendPluginDataUpdate]
+  );
+
+  const handleWidgetDataChange = useCallback(
+    (widgetId: string, data: WidgetData) => {
+      log.debug('handleWidgetDataChange', widgetId, data);
+      setWidgetMap(prevWidgetMap => {
+        const newWidgetMap = new Map<WidgetId, WidgetWrapper>(prevWidgetMap);
+        const widget = newWidgetMap.get(widgetId);
+        if (widget == null) {
+          throw new Error(`Widget not found: ${widgetId}`);
+        }
+        // We don't want the data change to re-render the WidgetHandler, so we mutate the object directly
+        // Will still re-render the DashboardPlugin though, which will save the data
+        widget.data = data;
+        return newWidgetMap;
+      });
+    },
+    []
   );
 
   const widgetHandlers = useMemo(
@@ -219,11 +252,15 @@ export function DashboardPlugin(
           fallback={id === DEFAULT_DASHBOARD_ID ? [] : null}
         >
           <DeferredApiBootstrap widget={widget.widget}>
-            <WidgetHandler widget={widget} onClose={handleWidgetClose} />
+            <WidgetHandler
+              widget={widget}
+              onDataChange={handleWidgetDataChange}
+              onClose={handleWidgetClose}
+            />
           </DeferredApiBootstrap>
         </ErrorBoundary>
       )),
-    [handleWidgetClose, widgetMap, id]
+    [handleWidgetClose, handleWidgetDataChange, widgetMap, id]
   );
 
   return (

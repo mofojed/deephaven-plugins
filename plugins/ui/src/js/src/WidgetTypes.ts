@@ -13,6 +13,11 @@ export type WidgetMessageEvent = CustomEvent<WidgetMessageDetails>;
 
 export type WidgetFetch = (takeOwnership?: boolean) => Promise<Widget>;
 
+export type WidgetData = {
+  /** Panel IDs that are opened by this widget */
+  panelIds?: readonly string[];
+};
+
 export type WidgetWrapper = {
   /** Function to fetch the widget instance from the server */
   fetch: WidgetFetch;
@@ -23,6 +28,6 @@ export type WidgetWrapper = {
   /** Descriptor for the widget. */
   widget: WidgetDescriptor;
 
-  /** Panel IDs that are opened by this widget */
-  panelIds: string[];
+  /** Data for the widget */
+  data?: WidgetData;
 };
