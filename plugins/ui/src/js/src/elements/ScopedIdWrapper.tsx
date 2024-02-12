@@ -1,7 +1,7 @@
 import React from 'react';
 import { ScopedIdContext, useScopedId } from './useScopedId';
 
-export type ScopedIDWrapperProps = {
+export type ScopedIdWrapperProps = {
   /** ID of the current scope */
   id: string;
 
@@ -18,12 +18,12 @@ export type ScopedIDWrapperProps = {
 /**
  * Wrapper that provides a scoped ID to its children, by adding to any parent scoped ID
  */
-export function ScopedIDWrapper({
+export function ScopedIdWrapper({
   id,
   children,
   newScope,
   delimiter,
-}: ScopedIDWrapperProps) {
+}: ScopedIdWrapperProps) {
   const scopedId = useScopedId(id, newScope, delimiter);
   return (
     <ScopedIdContext.Provider value={scopedId}>
@@ -32,4 +32,4 @@ export function ScopedIDWrapper({
   );
 }
 
-export default ScopedIDWrapper;
+export default ScopedIdWrapper;

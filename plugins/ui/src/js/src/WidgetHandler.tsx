@@ -32,7 +32,7 @@ import {
 } from './WidgetTypes';
 import DocumentHandler from './DocumentHandler';
 import { getComponentForElement } from './WidgetUtils';
-import ScopedIDWrapper from './elements/ScopedIdWrapper';
+import ScopedIdWrapper from './elements/ScopedIdWrapper';
 
 const log = Log.module('@deephaven/js-plugin-ui/WidgetHandler');
 
@@ -265,7 +265,7 @@ function WidgetHandler({
   return useMemo(
     () =>
       document != null ? (
-        <ScopedIDWrapper id={wrapper.id}>
+        <ScopedIdWrapper id={wrapper.id}>
           <DocumentHandler
             widget={wrapper.widget}
             data={wrapper.data}
@@ -274,7 +274,7 @@ function WidgetHandler({
           >
             {document}
           </DocumentHandler>
-        </ScopedIDWrapper>
+        </ScopedIdWrapper>
       ) : null,
     [document, handleDataChange, handleDocumentClose, wrapper]
   );
