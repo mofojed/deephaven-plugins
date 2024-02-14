@@ -3,7 +3,7 @@ import shortid from 'shortid';
 import { WidgetDescriptor } from '@deephaven/dashboard';
 import Log from '@deephaven/log';
 import { EMPTY_ARRAY, EMPTY_FUNCTION } from '@deephaven/utils';
-import { ReactPanelManagerContext } from './ReactPanelManager';
+import { WidgetPanelManagerContext } from './WidgetPanelManager';
 import { getRootChildren } from './DocumentUtils';
 import { WidgetData } from './WidgetTypes';
 
@@ -40,14 +40,6 @@ function DocumentHandler({
   const panelOpenCountRef = useRef(0);
   const panelIdIndex = useRef(0);
   const documentData = useRef(data);
-
-  const metadata = useMemo(
-    () => ({
-      name: widget.name ?? 'Unknown',
-      type: widget.type,
-    }),
-    [widget]
-  );
 
   // We initialize the data and store it in a ref so that we don't try and re-load the data every time the component re-renders
   const initializeData = useCallback(() => {
@@ -97,24 +89,30 @@ function DocumentHandler({
   const getPanelId = useCallback(() => {
     const panelId =
       documentData.current.panelIds?.[panelIdIndex.current] ?? shortid();
+    console.log(
+      'XXX panelId',
+      panelId,
+      panelIdIndex.current,
+      documentData.current.panelIds
+    );
     panelIdIndex.current += 1;
     return panelId;
   }, []);
 
   const panelManager = useMemo(
     () => ({
-      metadata,
+      widget,
       onOpen: handleOpen,
       onClose: handleClose,
       getPanelId,
     }),
-    [metadata, getPanelId, handleClose, handleOpen]
+    [widget, getPanelId, handleClose, handleOpen]
   );
 
   return (
-    <ReactPanelManagerContext.Provider value={panelManager}>
+    <WidgetPanelManagerContext.Provider value={panelManager}>
       {getRootChildren(children, widget)}
-    </ReactPanelManagerContext.Provider>
+    </WidgetPanelManagerContext.Provider>
   );
 }
 

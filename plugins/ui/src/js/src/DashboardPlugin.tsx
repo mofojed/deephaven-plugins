@@ -24,6 +24,7 @@ import styles from './styles.scss?inline';
 import { WidgetData, WidgetId, WidgetWrapper } from './WidgetTypes';
 import PortalPanel from './PortalPanel';
 import WidgetHandler from './WidgetHandler';
+import PortalPanelManager from './PortalPanelManager';
 
 const NAME_ELEMENT = 'deephaven.ui.Element';
 const DASHBOARD_ELEMENT = 'deephaven.ui.Dashboard';
@@ -202,7 +203,7 @@ export function DashboardPlugin(
       log.debug('sendPluginDataUpdate', newPluginData);
       setPluginData(newPluginData);
     },
-    []
+    [setPluginData]
   );
 
   const debouncedSendPluginDataUpdate = useDebouncedCallback(
@@ -232,7 +233,6 @@ export function DashboardPlugin(
       setWidgetMap(prevWidgetMap => {
         const newWidgetMap = new Map<WidgetId, WidgetWrapper>(prevWidgetMap);
         const widget = newWidgetMap.get(widgetId);
-        // debugger;
         if (widget == null) {
           throw new Error(`Widget not found: ${widgetId}`);
         }
@@ -266,10 +266,9 @@ export function DashboardPlugin(
   );
 
   return (
-    // We'll need to change up how the layout is provided once we have widgets that can open other dashboards...
     <LayoutManagerContext.Provider value={layout}>
       <style>{styles}</style>
-      {widgetHandlers}
+      <PortalPanelManager>{widgetHandlers}</PortalPanelManager>
     </LayoutManagerContext.Provider>
   );
 }

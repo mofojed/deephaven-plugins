@@ -1,4 +1,5 @@
 import { DashboardPanelProps } from '@deephaven/dashboard';
+import { useEffect } from 'react';
 
 /**
  * Emitted when a portal panel is opened
@@ -35,6 +36,21 @@ export function listenForPortalOpened(
 }
 
 /**
+ * Hook for listening for portal panel opened events
+ * @param eventHub Event hub to listen on
+ * @param handler Callback function when portal opened event is fired
+ */
+export function usePortalOpenedListener(
+  eventHub: DashboardPanelProps['glEventHub'],
+  handler: (p: PortalOpenedPayload) => void
+): void {
+  useEffect(
+    () => listenForPortalOpened(eventHub, handler),
+    [eventHub, handler]
+  );
+}
+
+/**
  * Emit a portal panel opened event
  * @param eventHub The event hub to emit the event on
  * @param payload The payload to emit
@@ -65,6 +81,22 @@ export function listenForPortalClosed(
   return () => {
     eventHub.off(PORTAL_CLOSED, handler);
   };
+}
+
+/**
+ * Hook for listening for portal panel closed events
+ * @param eventHub Event hub to listen on
+ * @param handler Callback function when portal closed event is fired
+ * @returns A function to stop listening for portal panel closed events
+ */
+export function usePortalClosedListener(
+  eventHub: DashboardPanelProps['glEventHub'],
+  handler: (p: PortalClosedPayload) => void
+): void {
+  useEffect(
+    () => listenForPortalClosed(eventHub, handler),
+    [eventHub, handler]
+  );
 }
 
 /**

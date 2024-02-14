@@ -3,8 +3,8 @@ import { render } from '@testing-library/react';
 import { LayoutUtils, useListener } from '@deephaven/dashboard';
 import ReactPanel from './ReactPanel';
 import {
-  ReactPanelManager,
-  ReactPanelManagerContext,
+  WidgetPanelManager,
+  WidgetPanelManagerContext,
 } from './ReactPanelManager';
 import { ReactPanelProps } from './layout/LayoutUtils';
 
@@ -21,9 +21,9 @@ function makeReactPanel({
   onClose = jest.fn(),
   onOpen = jest.fn(),
   title = 'test title',
-}: Partial<ReactPanelProps> & Partial<ReactPanelManager> = {}) {
+}: Partial<ReactPanelProps> & Partial<WidgetPanelManager> = {}) {
   return (
-    <ReactPanelManagerContext.Provider
+    <WidgetPanelManagerContext.Provider
       value={{
         metadata,
         onClose,
@@ -31,7 +31,7 @@ function makeReactPanel({
       }}
     >
       <ReactPanel title={title}>{children}</ReactPanel>
-    </ReactPanelManagerContext.Provider>
+    </WidgetPanelManagerContext.Provider>
   );
 }
 
