@@ -19,11 +19,11 @@ import {
 } from '@deephaven/jsapi-bootstrap';
 import { Widget } from '@deephaven/jsapi-types';
 import { ErrorBoundary } from '@deephaven/components';
+import { useDebouncedCallback } from '@deephaven/react-hooks';
 import styles from './styles.scss?inline';
 import { WidgetData, WidgetId, WidgetWrapper } from './WidgetTypes';
 import PortalPanel from './PortalPanel';
 import WidgetHandler from './WidgetHandler';
-import { useDebouncedCallback } from '@deephaven/react-hooks';
 
 const NAME_ELEMENT = 'deephaven.ui.Element';
 const DASHBOARD_ELEMENT = 'deephaven.ui.Dashboard';
@@ -164,6 +164,7 @@ export function DashboardPlugin(
   );
 
   const handlePanelClose = useCallback((panelId: string) => {
+    log.debug2('handlePanelClose', panelId);
     setWidgetMap(prevWidgetMap => {
       if (!prevWidgetMap.has(panelId)) {
         return prevWidgetMap;
@@ -175,7 +176,7 @@ export function DashboardPlugin(
   }, []);
 
   const handleWidgetClose = useCallback((widgetId: string) => {
-    log.debug('Closing widget', widgetId);
+    log.debug('handleWidgetClose', widgetId);
     setWidgetMap(prevWidgetMap => {
       const newWidgetMap = new Map<WidgetId, WidgetWrapper>(prevWidgetMap);
       newWidgetMap.delete(widgetId);
@@ -231,6 +232,7 @@ export function DashboardPlugin(
       setWidgetMap(prevWidgetMap => {
         const newWidgetMap = new Map<WidgetId, WidgetWrapper>(prevWidgetMap);
         const widget = newWidgetMap.get(widgetId);
+        // debugger;
         if (widget == null) {
           throw new Error(`Widget not found: ${widgetId}`);
         }

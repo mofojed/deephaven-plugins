@@ -40,7 +40,6 @@ function DocumentHandler({
   const panelOpenCountRef = useRef(0);
   const panelIdIndex = useRef(0);
   const documentData = useRef(data);
-  const { panelIds = EMPTY_ARRAY } = data;
 
   const metadata = useMemo(
     () => ({
@@ -50,6 +49,7 @@ function DocumentHandler({
     [widget]
   );
 
+  // We initialize the data and store it in a ref so that we don't try and re-load the data every time the component re-renders
   const initializeData = useCallback(() => {
     if (documentData.current == null) {
       documentData.current = {};
@@ -95,10 +95,11 @@ function DocumentHandler({
   );
 
   const getPanelId = useCallback(() => {
-    const panelId = panelIds[panelIdIndex.current] ?? shortid();
+    const panelId =
+      documentData.current.panelIds?.[panelIdIndex.current] ?? shortid();
     panelIdIndex.current += 1;
     return panelId;
-  }, [panelIds]);
+  }, []);
 
   const panelManager = useMemo(
     () => ({
