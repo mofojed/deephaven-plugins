@@ -1,14 +1,9 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import {
   LayoutUtils,
   PanelEvent,
+  WidgetDescriptor,
   useLayoutManager,
   useListener,
 } from '@deephaven/dashboard';
@@ -37,13 +32,12 @@ function ReactPanel({ children, title }: ReactPanelProps) {
   // If there is already a portal that exists, then we're rehydrating from a dehydrated state
   // Initialize the `isPanelOpenRef` and `openedWidgetRef` accordingly on initialization
   const isPanelOpenRef = useRef(element != null);
-  const openedWidgetRef = useRef<Record<string, unknown>>(
+  const openedWidgetRef = useRef<WidgetDescriptor>(
     element != null ? widget : null
   );
   const parent = useParentItem();
   const { eventHub } = layoutManager;
 
-  console.log('XXX ReactPanel portalManager', portalManager);
   log.debug2('Rendering panel', panelId);
 
   useEffect(
@@ -70,27 +64,6 @@ function ReactPanel({ children, title }: ReactPanelProps) {
   );
 
   useListener(eventHub, PanelEvent.CLOSED, handlePanelClosed);
-
-  // useEffect(() => {
-  //   console.log('XXX listenForPortalOpened', panelId);
-  //   listenForPortalOpened(eventHub, ({ container, element: newElement }) => {
-  //     if (LayoutUtils.getIdFromContainer(container) === panelId) {
-  //       log.debug2('Panel opened', panelId, newElement);
-  //       setElement(newElement);
-  //     }
-  //   });
-  // }, [eventHub, panelId]);
-
-  // useEffect(
-  //   () =>
-  //     listenForPortalClosed(eventHub, ({ container }) => {
-  //       if (LayoutUtils.getIdFromContainer(container) === panelId) {
-  //         isPanelOpenRef.current = false;
-  //         setElement(undefined);
-  //       }
-  //     }),
-  //   [eventHub, panelId]
-  // );
 
   useEffect(() => {
     if (

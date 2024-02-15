@@ -89,12 +89,6 @@ function DocumentHandler({
   const getPanelId = useCallback(() => {
     const panelId =
       documentData.current.panelIds?.[panelIdIndex.current] ?? shortid();
-    console.log(
-      'XXX panelId',
-      panelId,
-      panelIdIndex.current,
-      documentData.current.panelIds
-    );
     panelIdIndex.current += 1;
     return panelId;
   }, []);

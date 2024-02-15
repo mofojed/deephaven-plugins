@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { DashboardPanelProps, LayoutUtils } from '@deephaven/dashboard';
+import { DashboardPanelProps } from '@deephaven/dashboard';
 import { Panel } from '@deephaven/dashboard-core-plugins';
 import { emitPortalClosed, emitPortalOpened } from './PortalPanelEvent';
 
@@ -18,17 +18,9 @@ function PortalPanel({
     if (current == null) {
       return;
     }
-    console.log(
-      'XXX Portal opened',
-      LayoutUtils.getIdFromContainer(glContainer)
-    );
     emitPortalOpened(glEventHub, { container: glContainer, element: current });
 
     return () => {
-      console.log(
-        'XXX Portal closed',
-        LayoutUtils.getIdFromContainer(glContainer)
-      );
       emitPortalClosed(glEventHub, { container: glContainer });
     };
   }, [glContainer, glEventHub]);
