@@ -3,7 +3,7 @@ import shortid from 'shortid';
 import { WidgetDescriptor } from '@deephaven/dashboard';
 import Log from '@deephaven/log';
 import { EMPTY_ARRAY, EMPTY_FUNCTION } from '@deephaven/utils';
-import { WidgetPanelManagerContext } from './WidgetPanelManager';
+import { ReactPanelManagerContext } from '../layout/ReactPanelManager';
 import { getRootChildren } from './DocumentUtils';
 import { WidgetData } from './WidgetTypes';
 
@@ -104,9 +104,9 @@ function DocumentHandler({
   );
 
   return (
-    <WidgetPanelManagerContext.Provider value={panelManager}>
+    <ReactPanelManagerContext.Provider value={panelManager}>
       {getRootChildren(children, widget)}
-    </WidgetPanelManagerContext.Provider>
+    </ReactPanelManagerContext.Provider>
   );
 }
 

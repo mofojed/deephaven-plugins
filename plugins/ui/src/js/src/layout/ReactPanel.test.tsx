@@ -3,10 +3,10 @@ import { render } from '@testing-library/react';
 import { LayoutUtils, useListener } from '@deephaven/dashboard';
 import ReactPanel from './ReactPanel';
 import {
-  WidgetPanelManager,
-  WidgetPanelManagerContext,
+  ReactPanelManager,
+  ReactPanelManagerContext,
 } from './ReactPanelManager';
-import { ReactPanelProps } from './layout/LayoutUtils';
+import { ReactPanelProps } from './LayoutUtils';
 
 const mockPanelId = 'test-panel-id';
 jest.mock('shortid', () => jest.fn(() => mockPanelId));
@@ -21,9 +21,9 @@ function makeReactPanel({
   onClose = jest.fn(),
   onOpen = jest.fn(),
   title = 'test title',
-}: Partial<ReactPanelProps> & Partial<WidgetPanelManager> = {}) {
+}: Partial<ReactPanelProps> & Partial<ReactPanelManager> = {}) {
   return (
-    <WidgetPanelManagerContext.Provider
+    <ReactPanelManagerContext.Provider
       value={{
         metadata,
         onClose,
@@ -31,7 +31,7 @@ function makeReactPanel({
       }}
     >
       <ReactPanel title={title}>{children}</ReactPanel>
-    </WidgetPanelManagerContext.Provider>
+    </ReactPanelManagerContext.Provider>
   );
 }
 

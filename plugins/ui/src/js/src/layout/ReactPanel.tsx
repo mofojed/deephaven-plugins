@@ -3,17 +3,16 @@ import ReactDOM from 'react-dom';
 import {
   LayoutUtils,
   PanelEvent,
-  WidgetDescriptor,
   useLayoutManager,
   useListener,
 } from '@deephaven/dashboard';
 import Log from '@deephaven/log';
 import PortalPanel from './PortalPanel';
-import { useWidgetPanelManager } from './WidgetPanelManager';
-import { ReactPanelProps } from './layout/LayoutUtils';
-import { useParentItem } from './layout/ParentItemContext';
+import { ReactPanelManager, useReactPanelManager } from './ReactPanelManager';
+import { ReactPanelProps } from './LayoutUtils';
+import { useParentItem } from './ParentItemContext';
 import { ReactPanelContext } from './ReactPanelContext';
-import ScopedIdWrapper from './elements/ScopedIdWrapper';
+import ScopedIdWrapper from '../elements/ScopedIdWrapper';
 import { usePortalPanelManager } from './PortalPanelManagerContext';
 
 const log = Log.module('@deephaven/js-plugin-ui/ReactPanel');
@@ -23,8 +22,8 @@ const log = Log.module('@deephaven/js-plugin-ui/ReactPanel');
  */
 function ReactPanel({ children, title }: ReactPanelProps) {
   const layoutManager = useLayoutManager();
-  const panelManager = useWidgetPanelManager();
-  const { widget, onClose, onOpen, getPanelId } = panelManager;
+  const panelManager = useReactPanelManager();
+  const { metadata, onClose, onOpen, getPanelId } = panelManager;
   const panelId = useMemo(() => getPanelId(), [getPanelId]);
   const portalManager = usePortalPanelManager();
   const element = portalManager.get(panelId);
@@ -32,8 +31,8 @@ function ReactPanel({ children, title }: ReactPanelProps) {
   // If there is already a portal that exists, then we're rehydrating from a dehydrated state
   // Initialize the `isPanelOpenRef` and `openedWidgetRef` accordingly on initialization
   const isPanelOpenRef = useRef(element != null);
-  const openedWidgetRef = useRef<WidgetDescriptor>(
-    element != null ? widget : null
+  const openedMetadataRef = useRef<ReactPanelManager['metadata']>(
+    element != null ? metadata : null
   );
   const parent = useParentItem();
   const { eventHub } = layoutManager;
@@ -68,7 +67,7 @@ function ReactPanel({ children, title }: ReactPanelProps) {
   useEffect(() => {
     if (
       isPanelOpenRef.current === false ||
-      openedWidgetRef.current !== widget
+      openedMetadataRef.current !== metadata
     ) {
       if (isPanelOpenRef.current === false) {
         const existingStack = LayoutUtils.getStackForConfig(parent, {
@@ -81,7 +80,7 @@ function ReactPanel({ children, title }: ReactPanelProps) {
         }
       }
 
-      const panelTitle = title ?? widget.name ?? '';
+      const panelTitle = title ?? metadata?.name ?? '';
       const config = {
         type: 'react-component' as const,
         component: PortalPanel.displayName,
@@ -93,11 +92,11 @@ function ReactPanel({ children, title }: ReactPanelProps) {
       LayoutUtils.openComponent({ root: parent, config });
       log.debug('Opened panel', panelId, config);
       isPanelOpenRef.current = true;
-      openedWidgetRef.current = widget;
+      openedMetadataRef.current = metadata;
 
       onOpen(panelId);
     }
-  }, [parent, widget, onOpen, panelId, title]);
+  }, [parent, metadata, onOpen, panelId, title]);
 
   return element
     ? ReactDOM.createPortal(

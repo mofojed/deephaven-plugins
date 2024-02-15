@@ -23,7 +23,7 @@ import {
   isCallableNode,
   isElementNode,
   isObjectNode,
-} from './elements/ElementUtils';
+} from '../elements/ElementUtils';
 import {
   WidgetData,
   WidgetId,
@@ -32,7 +32,7 @@ import {
 } from './WidgetTypes';
 import DocumentHandler from './DocumentHandler';
 import { getComponentForElement } from './WidgetUtils';
-import ScopedIdWrapper from './elements/ScopedIdWrapper';
+import ScopedIdWrapper from '../elements/ScopedIdWrapper';
 
 const log = Log.module('@deephaven/js-plugin-ui/WidgetHandler');
 

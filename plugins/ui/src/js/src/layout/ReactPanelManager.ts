@@ -1,17 +1,17 @@
-import { WidgetDescriptor } from '@deephaven/dashboard';
+import { PanelProps } from '@deephaven/dashboard';
 import { useContextOrThrow } from '@deephaven/react-hooks';
 import { createContext } from 'react';
 
 /**
  * Manager for panels within a widget. This is used to manage the lifecycle of panels within a widget.
  */
-export interface WidgetPanelManager {
+export interface ReactPanelManager {
   /**
-   * Descriptor of the widget. Passed to all panels as metadata.
+   * Metadata stored with the panel. Typically a descriptor of the widget opening the panel and used for hydration.
    * Updating the metadata will cause the panel to be re-opened, or replaced if it is closed.
    * Can also be used for rehydration.
    */
-  widget: WidgetDescriptor;
+  metadata?: PanelProps['metadata'];
 
   /** Triggered when a panel is opened */
   onOpen: (panelId: string) => void;
@@ -27,12 +27,13 @@ export interface WidgetPanelManager {
   getPanelId: () => string;
 }
 
-export const WidgetPanelManagerContext =
-  createContext<WidgetPanelManager | null>(null);
+export const ReactPanelManagerContext = createContext<ReactPanelManager | null>(
+  null
+);
 
-export function useWidgetPanelManager(): WidgetPanelManager {
+export function useReactPanelManager(): ReactPanelManager {
   return useContextOrThrow(
-    WidgetPanelManagerContext,
-    'No WidgetPanelManager found, did you wrap in a WidgetPanelManagerProvider.Context?'
+    ReactPanelManagerContext,
+    'No ReactPanelManager found, did you wrap in a ReactPanelManagerProvider.Context?'
   );
 }

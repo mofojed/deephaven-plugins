@@ -21,10 +21,10 @@ import { Widget } from '@deephaven/jsapi-types';
 import { ErrorBoundary } from '@deephaven/components';
 import { useDebouncedCallback } from '@deephaven/react-hooks';
 import styles from './styles.scss?inline';
-import { WidgetData, WidgetId, WidgetWrapper } from './WidgetTypes';
-import PortalPanel from './PortalPanel';
-import WidgetHandler from './WidgetHandler';
-import PortalPanelManager from './PortalPanelManager';
+import { WidgetData, WidgetId, WidgetWrapper } from './widget/WidgetTypes';
+import PortalPanel from './layout/PortalPanel';
+import WidgetHandler from './widget/WidgetHandler';
+import PortalPanelManager from './layout/PortalPanelManager';
 
 const NAME_ELEMENT = 'deephaven.ui.Element';
 const DASHBOARD_ELEMENT = 'deephaven.ui.Dashboard';
