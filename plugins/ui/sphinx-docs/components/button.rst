@@ -1,0 +1,1 @@
+.. autofunction:: deephaven.ui.button

@@ -1,0 +1,1 @@
+.. autofunction:: deephaven.ui.use_column_data

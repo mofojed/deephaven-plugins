@@ -1,0 +1,1 @@
+.. autofunction:: deephaven.ui.contextual_help
