@@ -20,6 +20,11 @@ ui.components.spectrum.action\_button module
    :undoc-members:
    :show-inheritance:
 
+ui.components.spectrum.action\_button function
+--------------------------------------------
+
+.. autofunction:: deephaven.ui.components.spectrum.action_button
+
 ui.components.spectrum.basic module
 -----------------------------------
 

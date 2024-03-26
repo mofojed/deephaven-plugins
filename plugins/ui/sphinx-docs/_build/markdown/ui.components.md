@@ -7,6 +7,8 @@
   * [ui.components.spectrum.accessibility module](ui.components.spectrum.md#ui-components-spectrum-accessibility-module)
   * [ui.components.spectrum.action_button module](ui.components.spectrum.md#module-deephaven.ui.components.spectrum.action_button)
     * [`action_button()`](ui.components.spectrum.md#deephaven.ui.components.spectrum.action_button.action_button)
+  * [ui.components.spectrum.action_button function](ui.components.spectrum.md#ui-components-spectrum-action-button-function)
+    * [`action_button()`](ui.components.spectrum.md#deephaven.ui.components.spectrum.action_button)
   * [ui.components.spectrum.basic module](ui.components.spectrum.md#ui-components-spectrum-basic-module)
   * [ui.components.spectrum.button module](ui.components.spectrum.md#module-deephaven.ui.components.spectrum.button)
     * [`button()`](ui.components.spectrum.md#deephaven.ui.components.spectrum.button.button)
