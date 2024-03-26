@@ -1,0 +1,7 @@
+# Generating docs
+
+Using Sphinx to generate the components docs.
+
+1. Install sphinx: `pip install Sphinx`
+2. From this directory, run `make markdown`
+3. The output will be in the `_build/markdown/components` directory
