@@ -97,8 +97,12 @@ def button(
     UNSAFE_style: CSSProperties | None = None,
 ) -> Element:
     """
+    Based on Spectrum's `Button <https://react-spectrum.adobe.com/react-spectrum/Button.html>`_ component.
     Buttons allow users to perform an action or to navigate to another page. They have multiple styles for various needs, and are ideal for calling attention to where a user needs to do something in order to move forward in a flow.
-    Python implementation for the Adobe React Spectrum Button component: https://react-spectrum.adobe.com/react-spectrum/Button.html
+
+    Usage::
+
+        my_button = ui.button("Click me", on_press=lambda: print("Button clicked"))
 
     Args:
         *children: The contents to display inside the button.
