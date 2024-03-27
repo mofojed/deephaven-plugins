@@ -14,6 +14,7 @@ author = "Deephaven Data Labs"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
+    "myst_parser",  # So we can use markdown as input
     "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
     "sphinx.ext.todo",
@@ -22,7 +23,7 @@ extensions = [
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
-source_suffix = [".rst"]
+source_suffix = [".rst", ".md"]  # Can use either rst or markdown files as input
 
 language = "en"
 
