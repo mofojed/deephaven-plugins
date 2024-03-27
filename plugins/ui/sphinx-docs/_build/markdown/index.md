@@ -5,6 +5,14 @@ contain the root `toctree` directive. -->
 
 # Welcome to deephaven’s documentation!
 
+# Contents:
+
+* [Components](components/index.md)
+  * [Buttons](components/index.md#buttons)
+  * [Inputs](components/index.md#inputs)
+  * [Content](components/index.md#content)
+  * [Layout](components/index.md#layout)
+
 # Indices and tables
 
 * [Index](genindex.md)

@@ -10,7 +10,10 @@ Welcome to deephaven's documentation!
    :maxdepth: 4
    :caption: Contents:
 
-   deephaven.ui
+   components/button
+   components
+   components/index
+   hooks
 
 
 Indices and tables
