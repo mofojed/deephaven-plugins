@@ -88,8 +88,12 @@ def action_button(
     UNSAFE_style: CSSProperties | None = None,
 ) -> Element:
     """
-    ActionButtons allow users to perform an action. They're used for similar, task-based options within a workflow, and are ideal for interfaces where buttons aren't meant to draw a lot of attention.
-    Python implementation for the Adobe React Spectrum ActionButton component: https://react-spectrum.adobe.com/react-spectrum/ActionButton.html
+    Based on Spectrum's `ActionButton <https://react-spectrum.adobe.com/react-spectrum/ActionButton.html>`_ component.
+    An `action_button` allow users to perform an action. They're used for similar, task-based options within a workflow, and are ideal for interfaces where buttons aren't meant to draw a lot of attention.
+
+    Usage::
+
+        my_button = ui.action_button("Click me!", on_press=lambda: print("Button clicked!"))
 
     Args:
         *children: The content to display inside the button.
@@ -156,6 +160,9 @@ def action_button(
         aria_details: The details for the element.
         UNSAFE_class_name: A CSS class to apply to the element.
         UNSAFE_style: A CSS style to apply to the element.
+
+    Returns:
+        The action button element.
     """
     return spectrum_element(
         "ActionButton",

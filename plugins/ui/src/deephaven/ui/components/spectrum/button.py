@@ -102,7 +102,7 @@ def button(
 
     Usage::
 
-        my_button = ui.button("Click me", on_press=lambda: print("Button clicked"))
+        my_button = ui.button("Click me!", on_press=lambda: print("Button clicked!"))
 
     Args:
         *children: The contents to display inside the button.
@@ -175,6 +175,8 @@ def button(
         UNSAFE_class_name: A CSS class to apply to the element.
         UNSAFE_style: A CSS style to apply to the element.
 
+    Returns:
+        The button element.
     """
     return spectrum_element(
         "Button",

@@ -1,7 +1,13 @@
 ### deephaven.ui.action_button(\*children: Any, type: Literal['button', 'submit', 'reset'] = 'button', on_press: Callable[[PressEvent], None] | None = None, on_press_start: Callable[[PressEvent], None] | None = None, on_press_end: Callable[[PressEvent], None] | None = None, on_press_up: Callable[[PressEvent], None] | None = None, on_press_change: Callable[[bool], None] | None = None, on_focus: Callable[[FocusEvent], None] | None = None, on_blur: Callable[[FocusEvent], None] | None = None, on_focus_change: Callable[[bool], None] | None = None, on_key_down: Callable[[KeyboardEvent], None] | None = None, on_key_up: Callable[[KeyboardEvent], None] | None = None, auto_focus: bool | None = None, is_disabled: bool | None = None, is_quiet: bool | None = None, static_color: Literal['white', 'black'] | None = None, flex: str | int | float | bool | None = None, flex_grow: int | float | None = None, flex_shrink: int | float | None = None, flex_basis: str | int | float | None = None, align_self: Literal['auto', 'normal', 'start', 'end', 'center', 'flex-start', 'flex-end', 'self-start', 'self-end', 'stretch'] | None = None, justify_self: Literal['auto', 'normal', 'start', 'end', 'flex-start', 'flex-end', 'self-start', 'self-end', 'center', 'left', 'right', 'stretch'] | None = None, order: int | float | None = None, grid_area: str | None = None, grid_row: str | None = None, grid_row_start: str | None = None, grid_row_end: str | None = None, grid_column: str | None = None, grid_column_start: str | None = None, grid_column_end: str | None = None, margin: str | int | float | None = None, margin_top: str | int | float | None = None, margin_bottom: str | int | float | None = None, margin_start: str | int | float | None = None, margin_end: str | int | float | None = None, margin_x: str | int | float | None = None, margin_y: str | int | float | None = None, width: str | int | float | None = None, height: str | int | float | None = None, min_width: str | int | float | None = None, min_height: str | int | float | None = None, max_width: str | int | float | None = None, max_height: str | int | float | None = None, position: Literal['static', 'relative', 'absolute', 'fixed', 'sticky'] | None = None, top: str | int | float | None = None, bottom: str | int | float | None = None, start: str | int | float | None = None, end: str | int | float | None = None, left: str | int | float | None = None, right: str | int | float | None = None, z_index: int | float | None = None, is_hidden: bool | None = None, id: str | None = None, exclude_from_tab_order: bool | None = None, aria_expanded: Literal['true', 'false'] | bool | None = None, aria_haspopup: Literal['true', 'false'] | bool | Literal['menu', 'listbox', 'tree', 'grid', 'dialog'] | None = None, aria_controls: str | None = None, aria_label: str | None = None, aria_labelledby: str | None = None, aria_describedby: str | None = None, aria_pressed: Literal['true', 'false'] | bool | Literal['mixed'] | None = None, aria_details: str | None = None, UNSAFE_class_name: str | None = None, UNSAFE_style: Dict[str, Any] | None = None)
 
-ActionButtons allow users to perform an action. They’re used for similar, task-based options within a workflow, and are ideal for interfaces where buttons aren’t meant to draw a lot of attention.
-Python implementation for the Adobe React Spectrum ActionButton component: [https://react-spectrum.adobe.com/react-spectrum/ActionButton.html](https://react-spectrum.adobe.com/react-spectrum/ActionButton.html)
+Based on Spectrum’s [ActionButton](https://react-spectrum.adobe.com/react-spectrum/ActionButton.html) component.
+An action_button allow users to perform an action. They’re used for similar, task-based options within a workflow, and are ideal for interfaces where buttons aren’t meant to draw a lot of attention.
+
+Usage:
+
+```python
+my_button = ui.action_button("Click me!", on_press=lambda: print("Button clicked!"))
+```
 
 * **Parameters:**
   * **\*children** – The content to display inside the button.
@@ -68,3 +74,5 @@ Python implementation for the Adobe React Spectrum ActionButton component: [http
   * **aria_details** – The details for the element.
   * **UNSAFE_class_name** – A CSS class to apply to the element.
   * **UNSAFE_style** – A CSS style to apply to the element.
+* **Returns:**
+  The action button element.

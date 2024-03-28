@@ -25,11 +25,21 @@ def picker(
     **props: Any,
 ) -> PickerElement:
     """
+    Based on Spectrum's `Picker <https://react-spectrum.adobe.com/react-spectrum/Picker.html>`_ component.
     A picker that can be used to select from a list. Children should be one of four types:
     If children are of type PickerItem, they are the dropdown options.
     If children are of type SectionElement, they are the dropdown sections.
     If children are of type Table, the values in the table are the dropdown options. There can only be one child, the Table.
     If children are of type PartitionedTable, the values in the table are the dropdown options and the partitions create multiple sections. There can only be one child, the PartitionedTable.
+
+    Usage::
+
+        my_picker = ui.picker(
+            "Option 1",
+            "Option 2",
+            selected_key="Option 2",
+            on_change=lambda new_key: print(f"Selection changed {new_key}!"),
+        )
 
     Args:
         *children: The options to render within the picker.
@@ -61,7 +71,7 @@ def picker(
             Any other Picker prop, except items.
 
     Returns:
-        The rendered Picker.
+        A picker element.
     """
     children, props = create_props(locals())
 

@@ -1,6 +1,19 @@
 ### deephaven.ui.button_group(\*children: Any, is_disabled: bool | None = None, orientation: Literal['horizontal', 'vertical'] = 'horizontal', alignment: Literal['auto', 'normal', 'start', 'end', 'center', 'flex-start', 'flex-end', 'self-start', 'self-end', 'stretch'] = 'start', flex: str | int | float | bool | None = None, flex_grow: int | float | None = None, flex_shrink: int | float | None = None, flex_basis: str | int | float | None = None, align_self: Literal['auto', 'normal', 'start', 'end', 'center', 'flex-start', 'flex-end', 'self-start', 'self-end', 'stretch'] | None = None, justify_self: Literal['auto', 'normal', 'start', 'end', 'flex-start', 'flex-end', 'self-start', 'self-end', 'center', 'left', 'right', 'stretch'] | None = None, order: int | float | None = None, grid_area: str | None = None, grid_row: str | None = None, grid_column: str | None = None, grid_row_start: str | None = None, grid_row_end: str | None = None, grid_column_start: str | None = None, grid_column_end: str | None = None, margin: str | int | float | None = None, margin_top: str | int | float | None = None, margin_bottom: str | int | float | None = None, margin_start: str | int | float | None = None, margin_end: str | int | float | None = None, margin_x: str | int | float | None = None, margin_y: str | int | float | None = None, width: str | int | float | None = None, height: str | int | float | None = None, min_width: str | int | float | None = None, min_height: str | int | float | None = None, max_width: str | int | float | None = None, max_height: str | int | float | None = None, position: Literal['static', 'relative', 'absolute', 'fixed', 'sticky'] | None = None, top: str | int | float | None = None, bottom: str | int | float | None = None, left: str | int | float | None = None, right: str | int | float | None = None, start: str | int | float | None = None, end: str | int | float | None = None, z_index: int | float | None = None, is_hidden: bool | None = None, id: str | None = None, UNSAFE_class_name: str | None = None, UNSAFE_style: Dict[str, Any] | None = None)
 
+Based on Spectrum’s [ButtonGroup](https://react-spectrum.adobe.com/react-spectrum/ButtonGroup.html) component.
 A button group is a grouping of button whose actions are related to each other.
+
+Usage:
+
+```python
+my_button_group = ui.button_group(
+    ui.button("Button 1"),
+    ui.button("Button 2"),
+    ui.button("Button 3"),
+    orientation="vertical",
+    alignment="center",
+)
+```
 
 * **Parameters:**
   * **\*children** – The children of the button group.
@@ -40,3 +53,5 @@ A button group is a grouping of button whose actions are related to each other.
   * **id** – The unique identifier of the element.
   * **UNSAFE_class_name** – Set the CSS className for the element. Only use as a last resort. Use style props instead.
   * **UNSAFE_style** – Set the inline style for the element. Only use as a last resort. Use style props instead.
+* **Returns:**
+  The button group element.

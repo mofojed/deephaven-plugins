@@ -37,6 +37,7 @@ Display content in the UI with content components:
 * [`content()`](content/content.md)
 * [`contextual_help()`](content/contextual_help.md)
 * [`flex()`](content/flex.md)
+* [`flex()`](content/fragment.md)
 * [`grid()`](content/grid.md)
 * [`heading()`](content/heading.md)
 * [`icon()`](content/icon.md)

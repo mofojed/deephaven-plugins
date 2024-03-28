@@ -24,8 +24,18 @@ def flex(
     **props: Any,
 ):
     """
-    Python implementation for the Adobe React Spectrum Flex component.
-    https://react-spectrum.adobe.com/react-spectrum/Flex.html
+    Based on Spectrum's `Flex <https://react-spectrum.adobe.com/react-spectrum/Flex.html>`_ component.
+    Displays children in a flex layout.
+
+    Usage::
+
+        my_flex = ui.flex(
+            ui.text("Hello"),
+            ui.text("World"),
+            direction="column",
+            gap="size-200",
+        )
+
     """
     return spectrum_element(
         "Flex",

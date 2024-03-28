@@ -68,7 +68,18 @@ def button_group(
     UNSAFE_style: CSSProperties | None = None,
 ) -> Element:
     """
+    Based on Spectrum's `ButtonGroup <https://react-spectrum.adobe.com/react-spectrum/ButtonGroup.html>`_ component.
     A button group is a grouping of button whose actions are related to each other.
+
+    Usage::
+
+        my_button_group = ui.button_group(
+            ui.button("Button 1"),
+            ui.button("Button 2"),
+            ui.button("Button 3"),
+            orientation="vertical",
+            alignment="center",
+        )
 
     Args:
         *children: The children of the button group.
@@ -108,6 +119,9 @@ def button_group(
         id: The unique identifier of the element.
         UNSAFE_class_name: Set the CSS className for the element. Only use as a last resort. Use style props instead.
         UNSAFE_style: Set the inline style for the element. Only use as a last resort. Use style props instead.
+
+    Returns:
+        The button group element.
     """
     return spectrum_element(
         "ButtonGroup",

@@ -15,7 +15,15 @@ def section(
     *children: PickerItem, title: str | None = None, **props: Any
 ) -> SectionElement:
     """
-    A section that can be added to a menu, such as a picker. Children are the dropdown options.
+    A section that can be added to a menu, such as a `picker <picker>`_. Children are the dropdown options.
+
+    Usage::
+
+        my_picker = ui.picker(
+            ui.section("Cat", "Dog", title="Domesticated"),
+            ui.section("Lion", "Hyena", title="Wild"),
+        )
+
 
     Args:
         *children: The options to render within the section.

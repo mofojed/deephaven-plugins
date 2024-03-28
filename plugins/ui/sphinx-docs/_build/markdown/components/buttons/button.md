@@ -6,7 +6,7 @@ Buttons allow users to perform an action or to navigate to another page. They ha
 Usage:
 
 ```python
-my_button = ui.button("Click me", on_press=lambda: print("Button clicked"))
+my_button = ui.button("Click me!", on_press=lambda: print("Button clicked!"))
 ```
 
 * **Parameters:**
@@ -79,3 +79,5 @@ my_button = ui.button("Click me", on_press=lambda: print("Button clicked"))
   * **aria_details** – The details of the current element.
   * **UNSAFE_class_name** – A CSS class to apply to the element.
   * **UNSAFE_style** – A CSS style to apply to the element.
+* **Returns:**
+  The button element.

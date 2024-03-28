@@ -1,7 +1,32 @@
 # deephaven.ui documentation
 
-# Contents
+deephaven.ui is a plugin for Deephaven that allows for programmatic layouts and callbacks. It uses a React-like approach to building components and rendering them in the UI, allowing for creating reactive components that can be re-used and composed together, as well as reacting to user input from the UI.
 
+## Getting Started
+
+First, follow the guide to [Start a Deephaven Server](https://deephaven.io/core/docs/tutorials/pip-install/). Then, install the deephaven.ui plugin using `pip install`:
+
+```sh
+pip install deephaven-ui
+```
+
+You’ll then need to restart your Deephaven server to load the plugin.
+
+Once you have the Deephaven up, you can assign deephaven.ui components to variables and display them in the UI. For example, to display a simple button:
+
+```python
+from deephaven import ui
+
+my_button = ui.button("Click Me!", on_press=lambda e: print(f"Button was clicked! {e}"))
+```
+
+## Contents
+
+* [Quick start](tutorials/quick-start.md)
+  * [Handling events](tutorials/quick-start.md#handling-events)
+  * [Creating components](tutorials/quick-start.md#creating-components)
+  * [Using state](tutorials/quick-start.md#using-state)
+  * [Sharing state](tutorials/quick-start.md#sharing-state)
 * [Components](components/README.md)
   * [Buttons](components/README.md#buttons)
     * [`action_button()`](components/buttons/action_button.md)
@@ -21,6 +46,7 @@
     * [`content()`](components/content/content.md)
     * [`contextual_help()`](components/content/contextual_help.md)
     * [`flex()`](components/content/flex.md)
+    * [`flex()`](components/content/fragment.md)
     * [`grid()`](components/content/grid.md)
     * [`heading()`](components/content/heading.md)
     * [`icon()`](components/content/icon.md)
@@ -55,3 +81,7 @@
     * [`use_execution_context()`](hooks/advanced/use_execution_context.md)
     * [`use_liveness_scope()`](hooks/advanced/use_liveness_scope.md)
     * [`use_render_queue()`](hooks/advanced/use_render_queue.md)
+* [Architecture](architecture.md)
+  * [Rendering](architecture.md#rendering)
+  * [Communication/Callbacks](architecture.md#communication-callbacks)
+  * [Communication Layers](architecture.md#communication-layers)

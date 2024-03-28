@@ -22,6 +22,13 @@ def table(
     """
     Customization to how a table is displayed, how it behaves, and listen to UI events.
 
+    Usage::
+
+        from deephaven import empty_table, ui
+
+        t = empty_table(10).update("X=i")
+        my_table = ui.table(t, on_row_press=lambda row_index, row_data: print(row_index, row_data))
+
     Args:
         table: The table to wrap
         on_row_press: The callback function to run when a row is clicked.
@@ -40,6 +47,9 @@ def table(
             The first parameter is the column name.
         on_column_double_press: The callback function to run when a column is double clicked.
             The first parameter is the column name.
+
+    Returns:
+        The table element.
     """
     props = locals()
     del props["table"]

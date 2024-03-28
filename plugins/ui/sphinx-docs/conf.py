@@ -28,7 +28,15 @@ source_suffix = [".rst", ".md"]  # Can use either rst or markdown files as input
 language = "en"
 highlight_language = "python"
 
+
 root_doc = "README"
+
+# -- Options for HTML output -------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
+# We build markdown so we probably don't need these options.
+
+html_theme = "alabaster"
+html_static_path = ["_static"]
 
 # -- Options for todo extension ----------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/todo.html#configuration
