@@ -10,40 +10,50 @@ Select any of the components below for API reference details. For examples and u
 
 ## Buttons
 
-- [action_button](action_button.md)
-- [button](button.md)
-- [button_group](button_group.md)
-- [toggle_button](toggle_button.md)
+Button components are used to trigger actions via user interaction:
+
+* [`action_button()`](buttons/action_button.md)
+* [`button()`](buttons/button.md)
+* [`button_group()`](buttons/button_group.md)
+* [`toggle_button()`](buttons/toggle_button.md)
 
 ## Inputs
 
-- [checkbox](checkbox.md)
-- [form](form.md)
-- [number_field](number_field.md)
-- [picker](picker.md)
-- [range_slider](range_slider.md)
-- [slider](slider.md)
-- [switch](switch.md)
-- [text_field](text_field.md)
+Get input from the user with input components:
+
+* [`checkbox()`](inputs/checkbox.md)
+* [`form()`](inputs/form.md)
+* [`number_field()`](inputs/number_field.md)
+* [`picker()`](inputs/picker.md)
+* [`range_slider()`](inputs/range_slider.md)
+* [`slider()`](inputs/slider.md)
+* [`switch()`](inputs/switch.md)
+* [`text_field()`](inputs/text_field.md)
 
 ## Content
 
-- [content](content.md)
-- [contextual_help](contextual_help.md)
-- [flex](flex.md)
-- [grid](grid.md)
-- [heading](heading.md)
-- [icon](icon.md)
-- [item](item.md)
-- [illustrated_message](illustrated_message.md)
-- [table](table.md)
-- [tabs](tabs.md)
-- [view](view.md)
+Display content in the UI with content components:
+
+* [`content()`](content/content.md)
+* [`contextual_help()`](content/contextual_help.md)
+* [`flex()`](content/flex.md)
+* [`grid()`](content/grid.md)
+* [`heading()`](content/heading.md)
+* [`icon()`](content/icon.md)
+* [`illustrated_message()`](content/illustrated_message.md)
+* [`item()`](content/item.md)
+* [`table()`](content/table.md)
+* [`tabs()`](content/tabs.md)
+* [`tab_panels()`](content/tabs.md#deephaven.ui.tab_panels)
+* [`tab_list()`](content/tabs.md#deephaven.ui.tab_list)
+* [`view()`](content/view.md)
 
 ## Layout
 
-- [column](column.md)
-- [row](row.md)
-- [dashboard](dashboard.md)
-- [stack](stack.md)
-- [panel](panel.md)
+Organize components in the UI with layout components:
+
+* [`column()`](layout/column.md)
+* [`dashboard()`](layout/dashboard.md)
+* [`panel()`](layout/panel.md)
+* [`row()`](layout/row.md)
+* [`stack()`](layout/stack.md)

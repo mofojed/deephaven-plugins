@@ -58,3 +58,13 @@ logging.getLogger("deephaven.ui.hooks").setLevel(level=logging.WARNING)
 # Log all debug messages from the render module specifically
 logging.getLogger("deephaven.ui.render").setLevel(level=logging.DEBUG)
 ```
+
+# Generating docs
+
+Use Sphinx to generate the components docs.
+
+1. Build and pip install the deephaven.ui plugin: `python -m build --wheel && pip install dist/deephaven_plugin_ui-<version>.whl`
+2. Install sphinx: `pip install Sphinx`
+3. Navigate to the `sphinx-docs` directory: `cd sphinx-docs`
+4. From the `sphinx-docs` directory, run `rm -rf _build`, then `make markdown`
+5. The output will be in the `sphinx-docs/_build/markdown/` directory

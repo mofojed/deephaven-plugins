@@ -10,40 +10,40 @@ Select any of the components below for API reference details. For examples and u
 
 ## Buttons
 
-- [action_button](action_button)
-- [button](button)
-- [button_group](button_group)
-- [toggle_button](toggle_button)
+Button components are used to trigger actions via user interaction:
+
+```{toctree}
+:glob:
+:maxdepth: 1
+buttons/*
+```
 
 ## Inputs
 
-- [checkbox](checkbox)
-- [form](form)
-- [number_field](number_field)
-- [picker](picker)
-- [range_slider](range_slider)
-- [slider](slider)
-- [switch](switch)
-- [text_field](text_field)
+Get input from the user with input components:
+
+```{toctree}
+:glob:
+:maxdepth: 1
+inputs/*
+```
 
 ## Content
 
-- [content](content)
-- [contextual_help](contextual_help)
-- [flex](flex)
-- [grid](grid)
-- [heading](heading)
-- [icon](icon)
-- [item](item)
-- [illustrated_message](illustrated_message)
-- [table](table)
-- [tabs](tabs)
-- [view](view)
+Display content in the UI with content components:
+
+```{toctree}
+:glob:
+:maxdepth: 1
+content/*
+```
 
 ## Layout
 
-- [column](column)
-- [row](row)
-- [dashboard](dashboard)
-- [stack](stack)
-- [panel](panel)
+Organize components in the UI with layout components:
+
+```{toctree}
+:glob:
+:maxdepth: 1
+layout/*
+```

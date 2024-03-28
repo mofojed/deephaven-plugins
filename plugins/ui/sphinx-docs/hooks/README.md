@@ -4,25 +4,30 @@ Special functions prefixed with `use_` are called _hooks_. These functions must 
 
 ## General hooks
 
-- [use_callback](use_callback)
-- [use_effect](use_effect)
-- [use_memo](use_memo)
-- [use_ref](use_ref)
-- [use_state](use_state)
+General hooks for providing state, memoization, and other essential functionality for creating custom components.
+
+```{toctree}
+:glob:
+:maxdepth: 1
+general/*
+```
 
 ## Table hooks
 
-- [use_cell_data](use_cell_data)
-- [use_column_data](use_column_data)
-- [use_row_data](use_row_data)
-- [use_row_list](use_row_list)
-- [use_table_data](use_table_data)
-- [use_table_listener](use_table_listener)
+Use these hooks when you want to use data from a table on that python side:
+
+```{toctree}
+:glob:
+:maxdepth: 1
+table/*
+```
 
 ## Advanced hooks
 
 These hooks should only be used if you know what you're doing.
 
-- [use_execution_context](use_execution_context)
-- [use_liveness_scope](use_liveness_scope)
-- [use_render_queue](use_render_queue)
+```{toctree}
+:glob:
+:maxdepth: 1
+advanced/*
+```

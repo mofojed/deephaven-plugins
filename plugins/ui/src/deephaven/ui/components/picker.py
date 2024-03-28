@@ -28,10 +28,8 @@ def picker(
     A picker that can be used to select from a list. Children should be one of four types:
     If children are of type PickerItem, they are the dropdown options.
     If children are of type SectionElement, they are the dropdown sections.
-    If children are of type Table, the values in the table are the dropdown options.
-        There can only be one child, the Table.
-    If children are of type PartitionedTable, the values in the table are the dropdown options
-        and the partitions create multiple sections. There can only be one child, the PartitionedTable.
+    If children are of type Table, the values in the table are the dropdown options. There can only be one child, the Table.
+    If children are of type PartitionedTable, the values in the table are the dropdown options and the partitions create multiple sections. There can only be one child, the PartitionedTable.
 
     Args:
         *children: The options to render within the picker.

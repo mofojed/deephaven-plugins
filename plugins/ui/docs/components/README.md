@@ -10,40 +10,40 @@ Select any of the components below for API reference details. For examples and u
 
 ## Buttons
 
-- [action_button](action_button.md)
-- [button](button.md)
-- [button_group](button_group.md)
-- [toggle_button](toggle_button.md)
+- [action_button](action_button)
+- [button](button)
+- [button_group](button_group)
+- [toggle_button](toggle_button)
 
 ## Inputs
 
-- [checkbox](checkbox.md)
-- [form](form.md)
-- [number_field](number_field.md)
-- [picker](picker.md)
-- [range_slider](range_slider.md)
-- [slider](slider.md)
-- [switch](switch.md)
-- [text_field](text_field.md)
+- [checkbox](checkbox)
+- [form](form)
+- [number_field](number_field)
+- [picker](picker)
+- [range_slider](range_slider)
+- [slider](slider)
+- [switch](switch)
+- [text_field](text_field)
 
 ## Content
 
-- [content](content.md)
-- [contextual_help](contextual_help.md)
-- [flex](flex.md)
-- [grid](grid.md)
-- [heading](heading.md)
-- [icon](icon.md)
-- [item](item.md)
-- [illustrated_message](illustrated_message.md)
-- [table](table.md)
-- [tabs](tabs.md)
-- [view](view.md)
+- [content](content)
+- [contextual_help](contextual_help)
+- [flex](flex)
+- [grid](grid)
+- [heading](heading)
+- [icon](icon)
+- [item](item)
+- [illustrated_message](illustrated_message)
+- [table](table)
+- [tabs](tabs)
+- [view](view)
 
 ## Layout
 
-- [column](column.md)
-- [row](row.md)
-- [dashboard](dashboard.md)
-- [stack](stack.md)
-- [panel](panel.md)
+- [column](column)
+- [row](row)
+- [dashboard](dashboard)
+- [stack](stack)
+- [panel](panel)
