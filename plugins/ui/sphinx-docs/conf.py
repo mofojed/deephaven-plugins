@@ -28,6 +28,8 @@ source_suffix = [".rst", ".md"]  # Can use either rst or markdown files as input
 language = "en"
 highlight_language = "python"
 
+root_doc = "README"
+
 # -- Options for todo extension ----------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/todo.html#configuration
 

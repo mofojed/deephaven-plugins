@@ -1,12 +1,14 @@
-# Buttons
+# Components
 
-Use buttons to display stuff
+deephaven.ui provides many components to display in the UI. Use a component by assigning it to a variable, then display it in the UI.
+
+```python
+my_button = ui.button("Click Me!", on_press=lambda e: print(f"Button was clicked! {e}"))
+```
+
+Select any of the components below for API reference details. For examples and use cases, see the [examples]() page.
 
 ## Buttons
-
-```{toctree}
-
-```
 
 - [action_button](action_button.md)
 - [button](button.md)
