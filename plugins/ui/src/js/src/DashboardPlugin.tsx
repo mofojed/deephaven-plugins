@@ -31,10 +31,14 @@ import {
 import PortalPanel from './layout/PortalPanel';
 import PortalPanelManager from './layout/PortalPanelManager';
 import DashboardWidgetHandler from './widget/DashboardWidgetHandler';
+import { useSelector } from 'react-redux';
+import { RootState, ServerConfigValues } from '@deephaven/redux';
 
 const NAME_ELEMENT = 'deephaven.ui.Element';
 const DASHBOARD_ELEMENT = 'deephaven.ui.Dashboard';
 const PLUGIN_NAME = '@deephaven/js-plugin-ui.DashboardPlugin';
+const CONFIG_KEY_PREFIX = 'deephaven.ui.';
+const DEFAULT_DASHBOARD_CONFIG_KEY = `${CONFIG_KEY_PREFIX}defaultDashboard`;
 
 const log = Log.module('@deephaven/js-plugin-ui.DashboardPlugin');
 
@@ -74,7 +78,41 @@ export function DashboardPlugin(
     id,
     PLUGIN_NAME
   ) as unknown as [DashboardPluginData, (data: DashboardPluginData) => void];
-  const [initialPluginData] = useState(pluginData);
+
+  const serverConfigValues = useSelector<RootState, ServerConfigValues>(
+    state => state.serverConfigValues
+  );
+  const defaultDashboard =
+    serverConfigValues?.get(DEFAULT_DASHBOARD_CONFIG_KEY) ?? '';
+  console.log('XXX serverConfigValues', serverConfigValues, defaultDashboard);
+  const [initialPluginData] = useState<DashboardPluginData>(() => {
+    if (Boolean(defaultDashboard) && id === DEFAULT_DASHBOARD_ID) {
+      // User has configured a deephaven.ui dashboard as the default
+      // Set the initial plugin data to open that dashboard
+      console.log(
+        'XXX root is',
+        layout.root,
+        layout.root.config,
+        layout.root.contentItems,
+        layout.root.contentItems[0]
+      );
+      // layout.root.contentItems[0].remove();
+      // LayoutUtils.closeComponent(layout.root, layout.root.contentItems[0].remove());
+      return {
+        openWidgets: {
+          defaultDashboard: {
+            descriptor: {
+              type: DASHBOARD_ELEMENT,
+              name: defaultDashboard,
+            },
+          },
+        },
+      };
+    }
+    return pluginData;
+  });
+
+  console.log('XXX initialPluginData', initialPluginData);
 
   const objectFetcher = useObjectFetcher();
 
@@ -161,6 +199,13 @@ export function DashboardPlugin(
 
       log.debug('loadInitialPluginData', initialPluginData);
 
+      console.log(
+        'XXX initPluginData root is',
+        layout.root,
+        layout.root.contentItems,
+        layout.root.contentItems[0]
+      );
+
       setWidgetMap(prevWidgetMap => {
         const newWidgetMap = new Map(prevWidgetMap);
         const { openWidgets } = initialPluginData;
@@ -179,7 +224,7 @@ export function DashboardPlugin(
         return newWidgetMap;
       });
     },
-    [objectFetcher, initialPluginData, id]
+    [layout, objectFetcher, initialPluginData, id]
   );
 
   const handlePanelClose = useCallback(
