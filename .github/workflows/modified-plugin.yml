@@ -44,6 +44,9 @@ jobs:
             ui:
               - plugins/ui/**
               - .github/workflows/test-*.yml
+            ui-experimental:
+              - plugins/ui-experimental/**
+              - .github/workflows/test-*.yml
             utilities:
               - plugins/utilities/**
               - .github/workflows/test-*.yml
