@@ -2,6 +2,32 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## ui-v0.17.0 - 2024-06-28
+#### Bug Fixes
+- Don't render objects/children of panels if there's a widget error (#577) (#585) - (bd8cca9) - mofojed
+- Don't use a key for the ErrorBoundary in a Panel (#574) - (4a25715) - mofojed
+- Wrap the children of ReactPanel with an ErrorBoundary (#565) - (8cbee84) - mofojed
+#### Documentation
+- item (#531) - (21fe131) - ethanalvizo
+- illustrated message (#532) - (137c1ea) - ethanalvizo
+- heading (#553) - (00875f9) - ethanalvizo
+- grid (#552) - (5bf53e6) - ethanalvizo
+
+- - -
+
+## ui-v0.16.0 - 2024-06-28
+#### Documentation
+- view (#506) - (e4b7137) - ethanalvizo
+#### Features
+- Return callables from callables in Deephaven UI (#540) - (8322c2d) - Matthew Runyon
+- Use `useWidget` hook to load widgets (#502) - (d9d1e5e) - mofojed
+#### Refactoring
+- Cleanup js mappings for ui components + utils (#530) - (bbce797) - bmingles
+#### Revert
+- "revert: Revert some changes that are not compatible with v0.78 (#550)" (#551) - (3502f02) - mofojed
+
+- - -
+
 ## ui-v0.16.0 - 2024-06-19
 #### Documentation
 - view (#506) - (e4b7137) - ethanalvizo
