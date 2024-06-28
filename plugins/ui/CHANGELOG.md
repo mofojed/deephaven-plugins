@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## ui-v0.19.2 - 2024-06-28
+#### Bug Fixes
+- Adding a style back - (84aa246) - mikebender
+
+- - -
+
 ## ui-v0.19.1 - 2024-06-28
 #### Bug Fixes
 - Don't need the Row style - (8470269) - mikebender
