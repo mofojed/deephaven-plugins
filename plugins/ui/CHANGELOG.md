@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## ui-v1.0.0 - 2024-06-28
+
+- - -
+
 ## ui-v0.19.2 - 2024-06-28
 #### Bug Fixes
 - Adding a style back - (84aa246) - mikebender
