@@ -46,7 +46,7 @@ function Row({ children, height }: RowElementProps): JSX.Element {
   }
 
   return (
-    <Flex height={`${height}%`} direction="row" UNSAFE_style={{}}>
+    <Flex height={`${height}%`} direction="row">
       {children}
     </Flex>
   );
