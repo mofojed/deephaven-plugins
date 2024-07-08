@@ -1,6 +1,6 @@
 # deephaven.ui Plugin
 
-Plugin prototype for programmatic layouts and callbacks. Currently calling it `deephaven.ui` but that's not set in stone.
+Plugin prototype for programmatic layouts and callbacks. Currently calling it `deephaven.ui` but that's not set in stone. Let's settle on a name soon.
 
 ## Build
 
