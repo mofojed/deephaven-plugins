@@ -7,7 +7,7 @@
   overflow: hidden;
 }
 
-.ui-table-container {
+.ui-table-container, .ui-editor {
   // If all browsers properly supported 'stretch' for height and width
   // we could swap to that, but right now only Chrome properly implements it.
   // Stretch is prefixed as -webkit-fill-available for Chrome and Webkit
