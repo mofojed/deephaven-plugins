@@ -9,6 +9,7 @@ export * from './DateField';
 export * from './DatePicker';
 export * from './DateRangePicker';
 export * from './Dialog';
+export * from './Editor';
 export * from './Flex';
 export * from './Form';
 export * from './Grid';
