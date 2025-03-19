@@ -21,16 +21,16 @@ test('UI updates when interacting with it', async ({ page }) => {
 
   (
     await panelLocator.getByRole('button', {
-      name: 'Count 0',
+      name: 'You pressed me 0 times',
     })
   ).click();
   (
     await panelLocator.getByRole('button', {
-      name: 'Count 1',
+      name: 'You pressed me 1 times',
     })
   ).click();
   await expect(
-    panelLocator.getByRole('button', { name: 'Count 2' })
+    panelLocator.getByRole('button', { name: 'You pressed me 2 times' })
   ).toBeVisible();
   await panelLocator.getByRole('textbox', { name: 'Greeting' }).fill('goodbye');
   await expect(panelLocator.getByText('You typed goodbye')).toBeVisible();
@@ -50,11 +50,11 @@ test('UI state resets when re-opening', async ({ page }) => {
   const panelLocator = page.locator(SELECTORS.REACT_PANEL_VISIBLE);
   (
     await panelLocator.getByRole('button', {
-      name: 'Count 0',
+      name: 'You pressed me 0 times',
     })
   ).click();
   await expect(
-    panelLocator.getByRole('button', { name: 'Count 1' })
+    panelLocator.getByRole('button', { name: 'You pressed me 1 times' })
   ).toBeVisible();
   await panelLocator.getByRole('textbox', { name: 'Greeting' }).fill('goodbye');
   await expect(panelLocator.getByText('You typed goodbye')).toBeVisible();
@@ -65,11 +65,11 @@ test('UI state resets when re-opening', async ({ page }) => {
   // State should have reset, and we should still be able to interact with it
   (
     await panelLocator.getByRole('button', {
-      name: 'Count 0',
+      name: 'You pressed me 0 times',
     })
   ).click();
   await expect(
-    panelLocator.getByRole('button', { name: 'Count 1' })
+    panelLocator.getByRole('button', { name: 'You pressed me 1 times' })
   ).toBeVisible();
   await panelLocator.getByRole('textbox', { name: 'Greeting' }).fill('goodbye');
   await expect(panelLocator.getByText('You typed goodbye')).toBeVisible();
