@@ -1,10 +1,78 @@
 import { expect, test } from '@playwright/test';
-import { openPanel, gotoPage, SELECTORS } from './utils';
+import {
+  openPanel,
+  gotoPage,
+  SELECTORS,
+  generateVarName,
+  pasteInMonaco,
+} from './utils';
 
 test('UI loads', async ({ page }) => {
   await gotoPage(page, '');
   await openPanel(page, 'ui_component', SELECTORS.REACT_PANEL_VISIBLE);
   await expect(page.locator(SELECTORS.REACT_PANEL_VISIBLE)).toHaveScreenshot();
+});
+
+test('UI updates when interacting with it', async ({ page }) => {
+  await gotoPage(page, '');
+  await openPanel(page, 'ui_component', SELECTORS.REACT_PANEL_VISIBLE);
+
+  const panelLocator = page.locator(SELECTORS.REACT_PANEL_VISIBLE);
+
+  (
+    await panelLocator.getByRole('button', {
+      name: 'Count 0',
+    })
+  ).click();
+  (
+    await panelLocator.getByRole('button', {
+      name: 'Count 1',
+    })
+  ).click();
+  await expect(
+    panelLocator.getByRole('button', { name: 'Count 2' })
+  ).toBeVisible();
+  await panelLocator.getByRole('textbox', { name: 'Greeting' }).fill('goodbye');
+  await expect(panelLocator.getByText('You typed goodbye')).toBeVisible();
+  await expect(page.locator(SELECTORS.REACT_PANEL_VISIBLE)).toHaveScreenshot();
+});
+
+test('UI state resets when re-opening', async ({ page }) => {
+  await gotoPage(page, '');
+
+  // We need to assign the component to a variable name, interact with it, then re-run the snippet to re-open that variable
+  const consoleInput = page.locator('.console-input');
+  const varName = generateVarName();
+  const command = `${varName} = ui_component`;
+  await pasteInMonaco(consoleInput, command);
+  await page.keyboard.press('Enter');
+
+  const panelLocator = page.locator(SELECTORS.REACT_PANEL_VISIBLE);
+  (
+    await panelLocator.getByRole('button', {
+      name: 'Count 0',
+    })
+  ).click();
+  await expect(
+    panelLocator.getByRole('button', { name: 'Count 1' })
+  ).toBeVisible();
+  await panelLocator.getByRole('textbox', { name: 'Greeting' }).fill('goodbye');
+  await expect(panelLocator.getByText('You typed goodbye')).toBeVisible();
+
+  await pasteInMonaco(consoleInput, command);
+  await page.keyboard.press('Enter');
+
+  // State should have reset, and we should still be able to interact with it
+  (
+    await panelLocator.getByRole('button', {
+      name: 'Count 0',
+    })
+  ).click();
+  await expect(
+    panelLocator.getByRole('button', { name: 'Count 1' })
+  ).toBeVisible();
+  await panelLocator.getByRole('textbox', { name: 'Greeting' }).fill('goodbye');
+  await expect(panelLocator.getByText('You typed goodbye')).toBeVisible();
 });
 
 test('boom component shows an error in a panel', async ({ page }) => {
