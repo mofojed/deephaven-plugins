@@ -12,8 +12,6 @@ ta = ui.text_area(
 )
 ```
 
-![Text Area Basic Example](../_assets/text_area_basic.png)
-
 ## UI Recommendations
 
 Recommendations for creating text areas:

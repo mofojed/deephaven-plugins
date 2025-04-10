@@ -18,8 +18,6 @@ my_contextual_help_basic = ui.contextual_help(
 )
 ```
 
-![Contextual Help Basic Example](../_assets/contextual_help_basic.png)
-
 ## Placement
 
 The contextual help component supports different placement options for when the popover's positioning needs to be customized.

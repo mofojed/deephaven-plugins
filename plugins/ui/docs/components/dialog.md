@@ -28,8 +28,6 @@ def dialog_example():
 my_dialog_example = dialog_example()
 ```
 
-![Dialog Basic Example](../_assets/dialog_basic.png)
-
 ## Content
 
 The content can be populated by providing the following components to your `dialog` as children:

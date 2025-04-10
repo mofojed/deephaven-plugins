@@ -16,8 +16,6 @@ my_checkbox_group_basic = ui.checkbox_group(
 )
 ```
 
-![Checkbox Group Basic Example](../_assets/checkbox_group_basic.png)
-
 ## UI Recommendations
 
 Recommendations for creating checkbox groups:
@@ -27,6 +25,7 @@ Recommendations for creating checkbox groups:
 3. Checkbox groups can be either horizontal or vertical. By default, they are vertical; the orientation should only be horizontal if vertical space is limited.
 4. Checkbox groups can be marked as optional or required, with required groups indicated by either a “(required)” label or an asterisk icon, which should be accompanied by help text.
 5. Checkbox groups should use help text for error messaging and descriptions, providing context for why a selection is required or clarifying the options.
+
 
 Consider using [`checkbox_group`](./checkbox_group.md) to select or mark a single item as selected.
 
@@ -44,6 +43,7 @@ my_checkbox_group_content_example = ui.checkbox_group(
     label="Favourite Sports",
 )
 ```
+
 
 ## Value
 
@@ -78,6 +78,7 @@ def ui_checkbox_group_value_examples():
 my_checkbox_group_value_examples = ui_checkbox_group_value_examples()
 ```
 
+
 ## HTML Forms
 
 Checkbox groups can support a `name` prop for integration with HTML forms, allowing for easy identification of a value on form submission.
@@ -90,6 +91,7 @@ my_checkbox_name_example = ui.form(
     ui.checkbox_group(ui.checkbox("Sample Label"), name="Sample Name")
 )
 ```
+
 
 ## Labeling
 
@@ -117,6 +119,7 @@ def ui_checkbox_group_label_examples():
 
 my_checkbox_group_label_examples = ui_checkbox_group_label_examples()
 ```
+
 
 The `is_required` prop and the `necessity_indicator` props can be used to show whether selecting an option in the checked group is required or optional.
 
@@ -181,7 +184,7 @@ def ui_checkbox_group_event_example():
 my_checkbox_group_event_example = ui_checkbox_group_event_example()
 ```
 
-To require specific checkboxes to be checked, set the `is_required` prop at the Checkbox level, not the Checkbox Group.
+To require specific checkboxes to be checked, set the `is_required` prop at the Checkbox level, not the Checkbox Group. 
 
 ```python
 from deephaven import ui
@@ -203,6 +206,7 @@ my_checkbox_group_individual_validation_example = ui.form(
 )
 ```
 
+
 ## Orientation
 
 While aligned vertically by default, the axis with which the checkboxes align can be changed via the `orientation` prop.
@@ -221,7 +225,7 @@ my_checkbox_group_orientation_example = ui.checkbox_group(
 
 ## Label position
 
-By default, the position of a checkbox group's label is above the checkbox group, but it can be changed to the side using the `label_position` prop.
+By default, the position of a checkbox group's label is above the checkbox group, but it can be changed to the side using the `label_position` prop. 
 
 ```python
 from deephaven import ui
@@ -234,6 +238,7 @@ my_checkbox_group_label_position_example = ui.checkbox_group(
     label_position="side",
 )
 ```
+
 
 ## Help text
 
@@ -270,6 +275,7 @@ def ui_checkbox_group_help_text_examples():
 my_checkbox_group_help_text_examples = ui_checkbox_group_help_text_examples()
 ```
 
+
 ## Contextual Help
 
 Using the `contextual_help` prop, a `ui.contextual_help` can be placed next to the label to provide additional information about the checkbox group.
@@ -287,6 +293,7 @@ my_checkbox_group_contextual_help_example = ui.checkbox_group(
 )
 ```
 
+
 ## Disabled state
 
 The `is_disabled` prop disables a checkbox group to prevent user interaction. This is useful when the checkbox group should be visible but not available for selection.
@@ -303,6 +310,7 @@ my_checkbox_group_is_disabled_example = ui.checkbox_group(
     is_disabled=True,
 )
 ```
+
 
 ## Read only
 
@@ -325,6 +333,7 @@ my_checkbox_group_is_read_only_example = ui.checkbox_group(
 
 The `is_emphasized` prop makes the selected checkbox the user's accent color, adding a visual prominence to the selection.
 
+
 ```python
 from deephaven import ui
 
@@ -338,8 +347,11 @@ my_checkbox_group_is_emphasized_example = ui.checkbox_group(
 )
 ```
 
+
+
 ## API Reference
 
 ```{eval-rst}
 .. dhautofunction:: deephaven.ui.checkbox_group
 ```
+

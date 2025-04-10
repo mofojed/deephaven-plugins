@@ -19,8 +19,6 @@ my_radio_group_basic = ui.radio_group(
 )
 ```
 
-![Radio Group Basic Example](../_assets/radio_group_basic.png)
-
 ## UI Recommendations
 
 Recommendations for creating radio groups:

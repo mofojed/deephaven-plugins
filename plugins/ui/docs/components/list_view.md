@@ -22,8 +22,6 @@ def ui_list_view():
 my_list_view = ui_list_view()
 ```
 
-![List View Basic Example](../_assets/list_view_basic.png)
-
 ## Table Source Example
 
 List view items can also be generated from a table directly or using `item_table_source`.
@@ -335,7 +333,6 @@ my_list_view_density = ui_list_view_density()
 ```
 
 ## Overflow Mode
-
 The default behavior is to truncate content that overflows its row. Text can be wrapped instead by adding `wrap` to the `overflow_mode` prop.
 
 Note: Currently not supported if a table source is used.
@@ -374,6 +371,7 @@ def ui_list_view_overflow():
 
 my_list_view_overflow = ui_list_view_overflow()
 ```
+
 
 ## API reference
 
