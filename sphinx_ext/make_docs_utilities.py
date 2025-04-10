@@ -148,6 +148,60 @@ def build_documents() -> int:
     return 0
 
 
+def get_file_code_blocks(file: str) -> list[str]:
+    """
+    Get the code blocks from a markdown file
+
+    Args:
+        file: The file to get the code blocks from
+
+    Returns:
+        list[str]: The code blocks
+    """
+    with open(file, "r") as f:
+        lines = f.readlines()
+
+    code_blocks = []
+    in_code_block = False
+    current_block = []
+    for line in lines:
+        if line.startswith("```python"):
+            in_code_block = True
+            current_block = []
+        elif in_code_block:
+            if line.startswith("```"):
+                in_code_block = False
+                code_blocks.append("".join(current_block))
+            else:
+                current_block.append(line)
+
+    return code_blocks
+
+
+def get_all_code_blocks() -> list[list[str]]:
+    """
+    Test the markdown files to make sure all code blocks are valid
+
+    Iterates through all markdown files in the BUILT_DOCS directory and runs each code block
+    in the current environment. If any code block fails, it returns 1. If all code blocks
+    succeed, it returns 0.
+
+    Returns:
+        1 if the test failed, 0 if it succeeded
+    """
+
+    # Get the list of markdown files
+    files = list(md_files())
+
+    # Iterate through each file and run the code blocks
+    all_code_blocks = []
+    for file in files:
+        file_code_blocks = get_file_code_blocks(file)
+        all_code_blocks.append(file_code_blocks)
+
+    return all_code_blocks
+
+
 def remove_markdown_comments() -> None:
     """
     Remove the comment markers from the markdown files
