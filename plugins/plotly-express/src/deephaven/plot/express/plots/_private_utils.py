@@ -4,6 +4,7 @@ from functools import partial
 from collections.abc import Callable
 from typing import Any
 
+from deephaven.plot.selectable_dataset import SelectableDataSet
 from deephaven.plot.express.deephaven_figure import Calendar
 from pandas import DataFrame
 
@@ -36,7 +37,7 @@ def validate_common_args(args: dict) -> None:
 
     """
 
-    if not isinstance(args["table"], (Table, PartitionedTable)):
+    if not isinstance(args["table"], (Table, PartitionedTable, SelectableDataSet)):
         raise ValueError("Argument table is not of type Table")
 
 

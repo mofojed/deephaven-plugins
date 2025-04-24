@@ -3,7 +3,7 @@ from __future__ import annotations
 from itertools import cycle, count
 from collections.abc import Generator
 from math import floor, ceil
-from typing import Any, Callable, Mapping, cast, Tuple
+from typing import Any, Callable, Mapping, Union, cast, Tuple
 
 from pandas import DataFrame
 from plotly.graph_objects import Figure
@@ -11,6 +11,7 @@ from plotly.graph_objects import Figure
 from deephaven import pandas as dhpd
 from deephaven.table import Table
 from deephaven import empty_table
+from deephaven.plot.selectable_dataset import SelectableDataSet
 
 from .DeephavenFigure import DeephavenFigure
 from ..data_mapping import create_data_mapping
@@ -147,7 +148,7 @@ ATTACHED_UPDATE_MAP = {
 
 
 def col_null_mapping(
-    table: Table, cols: set[str]
+    table: Union[Table, SelectableDataSet], cols: set[str]
 ) -> Generator[tuple[str, str], None, None]:
     """For every column in the table, check if it is in the provided cols,
     then yield a tuple with the column name and associated null value.
@@ -159,13 +160,23 @@ def col_null_mapping(
     Yields:
       Tuple of the form (column name, associated null value)
     """
-    for col in table.columns:
-        if col.name in cols:
-            type_ = col.data_type.j_name
+
+    if isinstance(table, Table):
+        table_definition = table.definition.j_object
+    elif isinstance(table, SelectableDataSet):
+        table_definition = table.j_object.getTableDefinition()
+    else:
+        raise ValueError(f"Unsupported table type ${type(table)}")
+
+    column_definitions = table_definition.getColumns()
+    for i in range(0, column_definitions.size()):
+        col = column_definitions.get(i)
+        if col.getName() in cols:
+            type_ = col.getDataType().getName()
             if type_ in TYPE_NULL_MAPPING:
-                yield col.name, TYPE_NULL_MAPPING[type_]
+                yield col.getName(), TYPE_NULL_MAPPING[type_]
             else:
-                yield col.name, "`None`"
+                yield col.getName(), "`None`"
 
 
 def construct_min_dataframe(table: Table, data_cols: list[str]) -> DataFrame:

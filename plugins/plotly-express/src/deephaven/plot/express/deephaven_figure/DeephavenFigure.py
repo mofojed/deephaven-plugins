@@ -10,6 +10,7 @@ from copy import copy
 from deephaven.table import PartitionedTable, Table
 from deephaven.execution_context import ExecutionContext, get_exec_ctx
 from deephaven.liveness_scope import LivenessScope
+from deephaven.plot.selectable_dataset import SelectableDataSet
 
 from ..shared import args_copy
 from ..data_mapping import DataMapping
@@ -577,7 +578,11 @@ class DeephavenFigure:
             func: The function to call
 
         """
-        if isinstance(table, Table) and not table.is_refreshing:
+        if (
+            isinstance(table, Table)
+            and not table.is_refreshing
+            or isinstance(table, SelectableDataSet)
+        ):
             # static tables should not be managed
             # check because it doesn't throw an error on first manage attempt, but leads to errors later
             pass
