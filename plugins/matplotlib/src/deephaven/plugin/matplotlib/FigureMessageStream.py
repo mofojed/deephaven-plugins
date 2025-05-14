@@ -29,13 +29,25 @@ class FigureMessageStream(MessageStream):
         self._connection = connection
         self._is_closed = False
         self._is_exporting = False
+        self._count = 0
         print(f"FigureMessageStream created with figure: {figure}")
 
     def _handle_figure_update(self, artist, stale: bool) -> None:
+
         # Check if we're already drawing this figure, and the stale callback was triggered because of our call to savefig
         if self._is_exporting:
-            print("Figure is already exporting, skipping update")
+            # print("Figure is already exporting, skipping update")
             return
+
+        import traceback
+
+        traceback.print_stack()
+
+        print("handle_figure_udpate", artist, stale)
+
+        self._count += 1
+        if self._count > 50:
+            raise RuntimeError("Figure update callback called too many times")
 
         print("Figure update detected, exporting figure")
         self._is_exporting = True
@@ -45,7 +57,8 @@ class FigureMessageStream(MessageStream):
         self._figure.savefig(
             buf, format="PNG", dpi=DPI
         )  # Save the figure to the buffer
-        self._connection.on_data(buf.getvalue(), [self._figure])
+        self._connection.on_data(buf.getvalue(), [])
+        self._figure.stale = False  # Reset the stale flag
         print("Figure saved to buffer and sent to client")
 
         self._is_exporting = False
@@ -62,8 +75,9 @@ class FigureMessageStream(MessageStream):
         buf = BytesIO()
         print("Saving initial figure to buffer")
         self._figure.savefig(buf, format="PNG", dpi=DPI)
-        self._connection.on_data(buf.getvalue(), [self._figure])
+        self._connection.on_data(buf.getvalue(), [])
         print("Initial figure sent to client")
+        self._figure.stale = False
 
         self._figure.stale_callback = self._handle_figure_update
 

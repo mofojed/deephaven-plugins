@@ -79,14 +79,13 @@ export function MatplotlibView(
       async function fetchData() {
         log.debug('fetchData');
         const widget = await fetch();
-        const data = widget.getDataAsBase64();
-        console.log('Data', data);
         const imageData = widget.getDataAsBase64();
+        console.log('Data', imageData);
         setImageSrc(`data:image/png;base64,${imageData}`);
         widget.addEventListener('message', event => {
           log.debug('Message event', event);
-          console.log('Message event', event);
           const newImageData = event.detail.getDataAsBase64();
+          console.log('Message event', event, event.detail.exportedObjects);
           setImageSrc(`data:image/png;base64,${newImageData}`);
         });
       }

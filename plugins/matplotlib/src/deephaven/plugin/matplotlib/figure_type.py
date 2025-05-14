@@ -134,22 +134,12 @@ class FigureType(FetchOnlyObjectType):
 
 
 class NewFigureType(BidirectionalObjectType):
-    def __init__(self):
-        self._streams = WeakKeyDictionary()
-
     @property
     def name(self) -> str:
         return NAME
 
     def is_type(self, object) -> bool:
         return isinstance(object, Figure)
-
-    def to_bytes(self, exporter: Exporter, figure: Figure) -> bytes:
-        with liveness_scope() as scope, get_exec_ctx():
-            input_t = _get_input_table(figure)
-            exporter.reference(input_t)
-            scope.preserve(input_t)
-        return _export_figure(figure)
 
     def create_client_connection(
         self, obj: object, connection: MessageStream
@@ -159,10 +149,3 @@ class NewFigureType(BidirectionalObjectType):
         client_connection = FigureMessageStream(obj, connection)
         client_connection.start()
         return client_connection
-
-    def send_update(self, figure: Figure):
-        print("Sending update to figure")
-        stream = self._streams.get(figure)
-        if stream is not None:
-            data = _export_figure(figure)
-            stream.on_data(data)
