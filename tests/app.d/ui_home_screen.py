@@ -130,8 +130,8 @@ _double_dash = ui.dashboard(
         ),
         ui.panel(_example_dashboard),
     ),
-    # show_close_icon=False,
-    # show_headers=False,
+    show_close_icon=False,
+    show_headers=False,
 )
 # End of creating dashboards
 
@@ -208,8 +208,8 @@ def home_screen():
                 )
             ),
         ),
-        # show_close_icon=False,
-        # show_headers=False,
+        show_close_icon=False,
+        show_headers=False,
     )
 
 

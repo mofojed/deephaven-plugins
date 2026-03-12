@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useState } from 'react';
+import React, { PropsWithChildren, useMemo, useState } from 'react';
 import {
   Dashboard as DHCDashboard,
   useDashboardPanel,
@@ -10,12 +10,21 @@ import NestedDashboardContent from './NestedDashboardContent';
 import { ElementIdProps } from './LayoutUtils';
 import PortalPanel from './PortalPanel';
 
-type NestedDashboardProps = PropsWithChildren<ElementIdProps>;
+type NestedDashboardProps = PropsWithChildren<ElementIdProps> & {
+  /**
+   * Whether to show the close icon on panels in this dashboard. Defaults to `false`
+   */
+  showCloseIcon?: boolean;
+
+  /**
+   * Whether to show the headers on panels in this dashboard. Defaults to `true`
+   */
+  showHeaders?: boolean;
+};
 
 function NestedDashboardPlugin(
   props: Partial<DashboardPluginComponentProps>
 ): JSX.Element | null {
-  console.log('xxx Registering portal panel...');
   assertIsDashboardPluginProps(props);
   useDashboardPanel({
     dashboardProps: props,
@@ -35,15 +44,24 @@ function NestedDashboardPlugin(
  */
 function NestedDashboard({
   children,
+  showCloseIcon = false,
+  showHeaders = true,
   __dhId,
 }: NestedDashboardProps): JSX.Element {
   const plugins = useDashboardPlugins();
   const [layoutInitialized, setLayoutInitialized] = useState(false);
+  const layoutSettings = useMemo(
+    () => ({ showCloseIcon, hasHeaders: showHeaders }),
+    [showCloseIcon, showHeaders]
+  );
 
   return (
     <div className="dh-nested-dashboard">
       {/* DHCDashboard creates GoldenLayout and provides LayoutManagerContext */}
-      <DHCDashboard onLayoutInitialized={() => setLayoutInitialized(true)}>
+      <DHCDashboard
+        onLayoutInitialized={() => setLayoutInitialized(true)}
+        layoutSettings={layoutSettings}
+      >
         {plugins}
         <NestedDashboardPlugin />
         {layoutInitialized && (

@@ -13,6 +13,7 @@ import {
   PanelIdContext,
   useLayoutManager,
   useListener,
+  usePanelId as useLayoutPanelId,
 } from '@deephaven/dashboard';
 import {
   View,
@@ -124,6 +125,10 @@ function ReactPanel({
   const contentKey = useMemo(() => nanoid(), [metadata]);
 
   const parent = useParentItem();
+  const layoutPanelId = useLayoutPanelId();
+  // If we're opening these panels at the top level, they should be closable.
+  // We may make this settable as a prop on the panel in the future
+  const isClosable = layoutPanelId == null;
   const contextPanelId = usePanelId();
   if (contextPanelId != null) {
     throw new NestedPanelError(
@@ -177,6 +182,7 @@ function ReactPanel({
           props: { metadata },
           title: panelTitle,
           id: panelId,
+          isClosable,
         };
 
         LayoutUtils.openComponent({ root: parent, config });
