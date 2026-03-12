@@ -14,7 +14,6 @@ import Log from '@deephaven/log';
 import { DeferredApiBootstrap } from '@deephaven/jsapi-bootstrap';
 import { ErrorBoundary } from '@deephaven/components';
 import { useDebouncedCallback } from '@deephaven/react-hooks';
-import styles from './styles.scss?inline';
 import {
   ReadonlyWidgetData,
   WidgetDataUpdate,
@@ -218,7 +217,6 @@ function InnerDashboardPlugin(
 
   return (
     <LayoutManagerContext.Provider value={layout}>
-      <style>{styles}</style>
       <PortalPanelManager>{widgetHandlers}</PortalPanelManager>
     </LayoutManagerContext.Provider>
   );
