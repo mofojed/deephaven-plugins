@@ -91,6 +91,14 @@
   }
 }
 
+.dh-panel {
+  .dh-nested-dashboard {
+    .dashboard-container {
+      border: 1px solid var(--dh-color-bg);
+    }
+  }
+}
+
 .ui-text-wrap-balance {
   text-wrap: balance;
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ElementIdProps, type DashboardElementProps } from './LayoutUtils';
-import { usePanelId } from './ReactPanelContext';
+import { usePanelId as useLayoutPanelId } from '@deephaven/dashboard';
+import { usePanelId as useReactPanelId } from './ReactPanelContext';
 import NestedDashboard from './NestedDashboard';
 import DashboardContent from './DashboardContent';
 
@@ -14,7 +15,7 @@ function Dashboard({
   children,
   __dhId,
 }: DashboardElementProps & ElementIdProps): JSX.Element | null {
-  const contextPanelId = usePanelId();
+  const contextPanelId = useLayoutPanelId();
   const isNested = contextPanelId != null;
   if (isNested) {
     return <NestedDashboard __dhId={__dhId}>{children}</NestedDashboard>;
