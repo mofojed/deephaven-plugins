@@ -1,5 +1,5 @@
 import React from 'react';
-import { WidgetDescriptor } from '@deephaven/dashboard';
+import { usePanelId, WidgetDescriptor } from '@deephaven/dashboard';
 import Log from '@deephaven/log';
 import { ReactPanelManagerContext } from '../layout/ReactPanelManager';
 import { usePanelManager } from '../layout/usePanelManager';
@@ -40,6 +40,10 @@ function DocumentHandler({
 }: DocumentHandlerProps): JSX.Element {
   log.debug('Rendering document', widget);
 
+  // We can tell if we're opened by the DashboardPlugin or the WidgetPlugin or nested by checking the context ID
+  const contextPanelId = usePanelId();
+  const isNested = contextPanelId != null;
+
   const panelManager = usePanelManager({
     widget,
     initialData,
@@ -49,7 +53,7 @@ function DocumentHandler({
 
   return (
     <ReactPanelManagerContext.Provider value={panelManager}>
-      {getRootChildren(children, widget)}
+      {getRootChildren(children, widget, isNested)}
     </ReactPanelManagerContext.Provider>
   );
 }

@@ -74,6 +74,9 @@ export interface WidgetHandlerProps {
 
   /** Triggered when the data in the widget changes. Only the changed data is provided. */
   onDataChange?: (data: WidgetDataUpdate) => void;
+
+  /** What to render when the document is empty and in a loading state */
+  renderEmptyDocument?: () => JSX.Element | JSX.Element[] | null;
 }
 
 function WidgetHandler({
@@ -82,6 +85,7 @@ function WidgetHandler({
   widgetDescriptor,
   initialData: initialDataProp,
   id,
+  renderEmptyDocument: renderEmptyDocumentProp,
 }: WidgetHandlerProps): JSX.Element | null {
   const layoutManager = useLayoutManager();
   const { widget, error: widgetError } = useWidget(widgetDescriptor);
@@ -187,19 +191,9 @@ function WidgetHandler({
      * Renders an empty document. This is used when the widget is loading or has an error.
      */
     () => {
-      // Document hasn't been initialized yet. Display a loading spinner if applicable.
-      if (widgetDescriptor.type === WIDGET_ELEMENT) {
-        // Rehydration. Mount ReactPanels for each panelId in the initial data
-        // so loading spinners or widget errors are shown
-        if (initialData?.panelIds != null && initialData.panelIds.length > 0) {
-          // Do not add a key here
-          // When the real document mounts, it doesn't use keys and will cause a remount
-          // which triggers the DocumentHandler to think the panels were closed and messes up the layout
-          // eslint-disable-next-line react/jsx-key
-          return initialData.panelIds.map(() => <ReactPanel />);
-        }
-        // Default to a single panel so we can immediately show a loading spinner
-        return <ReactPanel />;
+      const result = renderEmptyDocumentProp?.();
+      if (result != null) {
+        return result;
       }
       if (error != null) {
         // If there's an error and the document hasn't rendered yet (mostly applies to dashboards), explicitly show an error view
@@ -209,7 +203,7 @@ function WidgetHandler({
       // Dashboards should not have a default document. It breaks its render flow
       return null;
     },
-    [error, initialData, widgetDescriptor]
+    [error, renderEmptyDocumentProp]
   );
 
   const [uriObjectMap] = useState<Map<string, UriExportedObject>>(new Map());
