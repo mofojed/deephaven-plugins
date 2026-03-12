@@ -1,5 +1,6 @@
 import React from 'react';
 import { WidgetDescriptor } from '@deephaven/dashboard';
+import { UriVariableDescriptor } from '@deephaven/jsapi-bootstrap';
 import ReactPanel from '../layout/ReactPanel';
 import { MixedPanelsError, NoChildrenError } from '../errors';
 import Dashboard from '../layout/Dashboard';
@@ -17,7 +18,7 @@ import Dashboard from '../layout/Dashboard';
  */
 export function getRootChildren(
   children: React.ReactNode,
-  widget: WidgetDescriptor,
+  widget: WidgetDescriptor | UriVariableDescriptor,
   isNested = false
 ): React.ReactNode {
   if (children == null) {
@@ -50,7 +51,13 @@ export function getRootChildren(
   if (nonLayoutCount === childrenArray.length && !isNested) {
     // Just wrap it in a panel
     return (
-      <ReactPanel title={widget.name ?? widget.id ?? widget.type}>
+      <ReactPanel
+        title={
+          typeof widget === 'string'
+            ? widget
+            : widget.name ?? widget.id ?? widget.type
+        }
+      >
         {children}
       </ReactPanel>
     );

@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
+import { UriVariableDescriptor } from '@deephaven/jsapi-bootstrap';
 import type { dh } from '@deephaven/jsapi-types';
 import {
   usePersistentState,
@@ -12,10 +13,13 @@ import WidgetHandler from './widget/WidgetHandler';
 type UIComponentProps = WidgetComponentProps<dh.Widget> & {
   // TODO: We shouldn't need this, should be added to the WidgetComponentProps type
   metadata?: WidgetDescriptor;
+
+  // Might be loading a URI resolved widget...
+  uri?: UriVariableDescriptor;
 };
 
 export function UIComponent(props: UIComponentProps): JSX.Element | null {
-  const { metadata: widgetDescriptor, __dhId } = props;
+  const { metadata: widgetDescriptor, uri, __dhId } = props;
 
   const [widgetData, setWidgetData] = usePersistentState<
     WidgetData | undefined
@@ -33,12 +37,13 @@ export function UIComponent(props: UIComponentProps): JSX.Element | null {
     [setWidgetData]
   );
 
-  if (widgetDescriptor == null) {
+  const descriptor = uri ?? widgetDescriptor;
+  if (descriptor == null) {
     throw new Error('No widget descriptor');
   }
   return (
     <WidgetHandler
-      widgetDescriptor={widgetDescriptor}
+      widgetDescriptor={descriptor}
       initialData={widgetData}
       onDataChange={handleDataChange}
       id={id}

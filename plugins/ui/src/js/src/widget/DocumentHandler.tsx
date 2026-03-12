@@ -1,5 +1,6 @@
 import React from 'react';
 import { usePanelId, WidgetDescriptor } from '@deephaven/dashboard';
+import { UriVariableDescriptor } from '@deephaven/jsapi-bootstrap';
 import Log from '@deephaven/log';
 import { ReactPanelManagerContext } from '../layout/ReactPanelManager';
 import { usePanelManager } from '../layout/usePanelManager';
@@ -10,7 +11,7 @@ const log = Log.module('@deephaven/js-plugin-ui/DocumentHandler');
 
 export type DocumentHandlerProps = React.PropsWithChildren<{
   /** Definition of the widget used to create this document. Used for titling panels if necessary. */
-  widget: WidgetDescriptor;
+  widget: WidgetDescriptor | UriVariableDescriptor;
 
   /**
    * Data state to use when loading the widget.

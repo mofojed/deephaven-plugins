@@ -17,7 +17,7 @@ import {
   JSONRPCServerAndClient,
 } from 'json-rpc-2.0';
 import { useLayoutManager, WidgetDescriptor } from '@deephaven/dashboard';
-import { useWidget } from '@deephaven/jsapi-bootstrap';
+import { UriVariableDescriptor, useWidget } from '@deephaven/jsapi-bootstrap';
 import type { dh } from '@deephaven/jsapi-types';
 import Log from '@deephaven/log';
 import { usePluginsElementMap } from '@deephaven/plugin';
@@ -44,7 +44,6 @@ import DocumentHandler from './DocumentHandler';
 import {
   transformNode,
   getComponentForElement,
-  WIDGET_ELEMENT,
   wrapCallable,
   DASHBOARD_ELEMENT,
 } from './WidgetUtils';
@@ -52,7 +51,6 @@ import WidgetStatusContext, {
   WidgetStatus,
 } from '../layout/WidgetStatusContext';
 import WidgetErrorView from './WidgetErrorView';
-import ReactPanel from '../layout/ReactPanel';
 import Toast, { TOAST_EVENT } from '../events/Toast';
 import UriExportedObject from './UriExportedObject';
 import applyJsonPatch from './WidgetJsonPatch';
@@ -61,7 +59,7 @@ const log = Log.module('@deephaven/js-plugin-ui/WidgetHandler');
 
 export interface WidgetHandlerProps {
   /** Widget for this to handle */
-  widgetDescriptor: WidgetDescriptor;
+  widgetDescriptor: WidgetDescriptor | UriVariableDescriptor;
 
   /** Widget ID maintained by the DashboardPlugin */
   id: string;
