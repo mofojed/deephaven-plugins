@@ -85,10 +85,8 @@ function WidgetHandler({
   id,
   renderEmptyDocument: renderEmptyDocumentProp,
 }: WidgetHandlerProps): JSX.Element | null {
-  const layoutManager = useLayoutManager();
   const { widget, error: widgetError } = useWidget(widgetDescriptor);
   const [isLoading, setIsLoading] = useState(true);
-  const [prevWidget, setPrevWidget] = useState<dh.Widget | null>(widget);
   const [prevWidgetDescriptor, setPrevWidgetDescriptor] =
     useState(widgetDescriptor);
   // Cannot use usePrevious to change setIsLoading
@@ -97,16 +95,6 @@ function WidgetHandler({
   if (widgetDescriptor !== prevWidgetDescriptor) {
     setPrevWidgetDescriptor(widgetDescriptor);
     setIsLoading(true);
-  }
-
-  if (widget !== prevWidget) {
-    setPrevWidget(widget);
-    if (widget != null && widget.type === DASHBOARD_ELEMENT) {
-      log.info(
-        'Dashboard widget has changed, removing previous elements from layout'
-      );
-      layoutManager.root.contentItems.forEach(item => item.remove());
-    }
   }
 
   if (widgetError != null && isLoading) {
