@@ -85,28 +85,10 @@ function WidgetHandler({
   id,
   renderEmptyDocument: renderEmptyDocumentProp,
 }: WidgetHandlerProps): JSX.Element | null {
-  const layoutManager = useLayoutManager();
-  // If we were the first widget, and we're a dashboard, we may just open up and use the full layout
-  const isFirstWidget = useMemo(
-    () => layoutManager.root.contentItems.length === 0,
-    [layoutManager]
-  );
   const { widget, error: widgetError } = useWidget(widgetDescriptor);
-  const [prevWidget, setPrevWidget] = useState<dh.Widget | null>(widget);
   const [isLoading, setIsLoading] = useState(true);
   const [prevWidgetDescriptor, setPrevWidgetDescriptor] =
     useState(widgetDescriptor);
-
-  if (widget !== prevWidget) {
-    setPrevWidget(widget);
-    if (widget != null && widget.type === DASHBOARD_ELEMENT && isFirstWidget) {
-      log.info(
-        'Dashboard widget has changed, removing previous elements from layout'
-      );
-      layoutManager.root.contentItems.forEach(item => item.remove());
-    }
-  }
-
   // Cannot use usePrevious to change setIsLoading
   // Since usePrevious runs in an effect, the value never gets updated if setIsLoading is called during render
   // Use the widgetDescriptor because useWidget is async so the widget doesn't immediately change
