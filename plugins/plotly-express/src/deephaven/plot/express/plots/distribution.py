@@ -310,6 +310,13 @@ def _ecdf(
     title: str | None = None,
     template: str | None = None,
     unsafe_update_figure: Callable = default_callback,
+    on_click: Callable | None = None,
+    on_select: Callable | None = None,
+    on_deselect: Callable | None = None,
+    on_hover: Callable | None = None,
+    on_unhover: Callable | None = None,
+    on_relayout: Callable | None = None,
+    on_legend_click: Callable | None = None,
 ) -> DeephavenFigure:
     """
 
@@ -372,6 +379,13 @@ def histogram(
     title: str | None = None,
     template: str | None = None,
     unsafe_update_figure: Callable = default_callback,
+    on_click: Callable | None = None,
+    on_select: Callable | None = None,
+    on_deselect: Callable | None = None,
+    on_hover: Callable | None = None,
+    on_unhover: Callable | None = None,
+    on_relayout: Callable | None = None,
+    on_legend_click: Callable | None = None,
 ) -> DeephavenFigure:
     """Returns a histogram
 

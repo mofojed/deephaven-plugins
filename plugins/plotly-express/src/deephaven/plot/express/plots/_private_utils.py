@@ -16,6 +16,7 @@ import deephaven.pandas as dhpd
 from ._layer import atomic_layer
 from .PartitionManager import PartitionManager
 from ..deephaven_figure import generate_figure, DeephavenFigure
+from ..events import EVENT_HANDLER_KWARGS
 from ..shared import args_copy, unsafe_figure_update_wrapper
 from ..shared.distribution_args import (
     SHARED_DEFAULTS,
@@ -419,6 +420,15 @@ def process_args(
     render_args = locals()
     render_args["args"]["table"] = convert_to_table(render_args["args"]["table"])
 
+    # Pull plotly event handlers out of args before they reach plotly express;
+    # they are installed on the resulting DeephavenFigure below.
+    event_handlers = {}
+    for kwarg in EVENT_HANDLER_KWARGS:
+        if kwarg in render_args["args"]:
+            handler = render_args["args"].pop(kwarg)
+            if handler is not None:
+                event_handlers[kwarg[len("on_") :]] = handler
+
     # Calendar is directly sent to the client for processing
     calendar = retrieve_calendar(render_args)
 
@@ -461,6 +471,9 @@ def process_args(
     )
 
     new_fig.calendar = calendar
+
+    for event_type, handler in event_handlers.items():
+        new_fig.set_event_handler(event_type, handler)
 
     return new_fig
 

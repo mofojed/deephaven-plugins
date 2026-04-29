@@ -195,6 +195,13 @@ export class PlotlyExpressChartModel extends ChartModel {
    */
   requiredColumns: Set<string> = new Set();
 
+  /**
+   * Plotly event names (snake_case) for which the server has registered a
+   * Python handler. Empty when the figure has no event handlers, in which
+   * case the client must not attach plotly listeners.
+   */
+  registeredEvents: Set<string> = new Set();
+
   cleanupSubscriptions(id: number): void {
     this.subscriptionCleanupMap.get(id)?.forEach(cleanup => {
       cleanup();
@@ -522,6 +529,7 @@ export class PlotlyExpressChartModel extends ChartModel {
     const { plotly, deephaven } = figure;
     const { layout: plotlyLayout = {} } = plotly;
     this.tableColumnReplacementMap = getDataMappings(data);
+    this.registeredEvents = new Set(deephaven.events ?? []);
 
     this.plotlyData = plotly.data;
 
@@ -924,6 +932,27 @@ export class PlotlyExpressChartModel extends ChartModel {
         })
       );
     }
+  }
+
+  /**
+   * The plotly event names (snake_case) the server has registered handlers for.
+   */
+  getRegisteredEvents(): ReadonlySet<string> {
+    return this.registeredEvents;
+  }
+
+  /**
+   * Forward a sanitized plotly event to the server. Called by
+   * PlotlyEventBridge after a plotly DOM listener fires.
+   */
+  sendEvent(eventType: string, data: unknown): void {
+    this.widget?.sendMessage(
+      JSON.stringify({
+        type: 'EVENT',
+        event_type: eventType,
+        data,
+      })
+    );
   }
 
   pauseUpdates(): void {

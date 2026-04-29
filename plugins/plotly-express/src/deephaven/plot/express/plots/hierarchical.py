@@ -30,6 +30,13 @@ def treemap(
     branchvalues: str | None = None,
     maxdepth: int | None = None,
     unsafe_update_figure: Callable = default_callback,
+    on_click: Callable | None = None,
+    on_select: Callable | None = None,
+    on_deselect: Callable | None = None,
+    on_hover: Callable | None = None,
+    on_unhover: Callable | None = None,
+    on_relayout: Callable | None = None,
+    on_legend_click: Callable | None = None,
 ) -> DeephavenFigure:
     """Returns a treemap chart
 
@@ -103,6 +110,13 @@ def sunburst(
     branchvalues: str | None = None,
     maxdepth: int | None = None,
     unsafe_update_figure: Callable = default_callback,
+    on_click: Callable | None = None,
+    on_select: Callable | None = None,
+    on_deselect: Callable | None = None,
+    on_hover: Callable | None = None,
+    on_unhover: Callable | None = None,
+    on_relayout: Callable | None = None,
+    on_legend_click: Callable | None = None,
 ) -> DeephavenFigure:
     """Returns a sunburst chart
 
@@ -176,6 +190,13 @@ def icicle(
     branchvalues: str | None = None,
     maxdepth: int | None = None,
     unsafe_update_figure: Callable = default_callback,
+    on_click: Callable | None = None,
+    on_select: Callable | None = None,
+    on_deselect: Callable | None = None,
+    on_hover: Callable | None = None,
+    on_unhover: Callable | None = None,
+    on_relayout: Callable | None = None,
+    on_legend_click: Callable | None = None,
 ) -> DeephavenFigure:
     """Returns a icicle chart
 
@@ -252,6 +273,13 @@ def funnel(
     title: str | None = None,
     template: str | None = None,
     unsafe_update_figure: Callable = default_callback,
+    on_click: Callable | None = None,
+    on_select: Callable | None = None,
+    on_deselect: Callable | None = None,
+    on_hover: Callable | None = None,
+    on_unhover: Callable | None = None,
+    on_relayout: Callable | None = None,
+    on_legend_click: Callable | None = None,
 ) -> DeephavenFigure:
     """Returns a funnel chart
 
@@ -330,6 +358,13 @@ def funnel_area(
     template: str | None = None,
     opacity: float | None = None,
     unsafe_update_figure: Callable = default_callback,
+    on_click: Callable | None = None,
+    on_select: Callable | None = None,
+    on_deselect: Callable | None = None,
+    on_hover: Callable | None = None,
+    on_unhover: Callable | None = None,
+    on_relayout: Callable | None = None,
+    on_legend_click: Callable | None = None,
 ) -> DeephavenFigure:
     """Returns a funnel area chart
 

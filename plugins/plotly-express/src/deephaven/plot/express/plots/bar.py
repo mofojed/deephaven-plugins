@@ -54,6 +54,13 @@ def bar(
     title: str | None = None,
     template: str | None = None,
     unsafe_update_figure: Callable = default_callback,
+    on_click: Callable | None = None,
+    on_select: Callable | None = None,
+    on_deselect: Callable | None = None,
+    on_hover: Callable | None = None,
+    on_unhover: Callable | None = None,
+    on_relayout: Callable | None = None,
+    on_legend_click: Callable | None = None,
 ) -> DeephavenFigure:
     """Returns a bar chart
 
@@ -190,6 +197,13 @@ def _bar_polar(
     title: str | None = None,
     template: str | None = None,
     unsafe_update_figure: Callable = default_callback,
+    on_click: Callable | None = None,
+    on_select: Callable | None = None,
+    on_deselect: Callable | None = None,
+    on_hover: Callable | None = None,
+    on_unhover: Callable | None = None,
+    on_relayout: Callable | None = None,
+    on_legend_click: Callable | None = None,
 ) -> DeephavenFigure:
     """
 
@@ -257,6 +271,13 @@ def timeline(
     title: str | None = None,
     template: str | None = None,
     unsafe_update_figure: Callable = default_callback,
+    on_click: Callable | None = None,
+    on_select: Callable | None = None,
+    on_deselect: Callable | None = None,
+    on_hover: Callable | None = None,
+    on_unhover: Callable | None = None,
+    on_relayout: Callable | None = None,
+    on_legend_click: Callable | None = None,
 ) -> DeephavenFigure:
     """Returns a timeline (otherwise known as a gantt chart)
 
@@ -362,6 +383,13 @@ def frequency_bar(
     title: str | None = None,
     template: str | None = None,
     unsafe_update_figure: Callable = default_callback,
+    on_click: Callable | None = None,
+    on_select: Callable | None = None,
+    on_deselect: Callable | None = None,
+    on_hover: Callable | None = None,
+    on_unhover: Callable | None = None,
+    on_relayout: Callable | None = None,
+    on_legend_click: Callable | None = None,
 ) -> DeephavenFigure:
     """Returns a bar chart that contains the counts of the specified columns
 

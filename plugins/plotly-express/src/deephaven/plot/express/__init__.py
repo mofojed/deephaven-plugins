@@ -8,6 +8,7 @@ from plotly.graph_objs import Figure
 
 from .communication.DeephavenFigureConnection import DeephavenFigureConnection
 from .deephaven_figure import DeephavenFigure
+from .events import PlotlyEvent, PlotlyEventPoint
 
 from .plots import (
     area,

@@ -15,6 +15,7 @@ import deephaven.pandas as dhpd
 
 from ..shared import args_copy
 from ..data_mapping import DataMapping
+from ..events import EVENT_NAMES
 from ..exporter import Exporter
 from .RevisionManager import RevisionManager
 from .FigureCalendar import FigureCalendar, Calendar
@@ -651,6 +652,7 @@ class DeephavenFigure:
         is_plotly_fig: bool = False,
         calendar: Calendar = False,
         filter_columns: set[FilterColumn] | None = None,
+        event_handlers: dict[str, Callable] | None = None,
     ):
         """
         Create a new DeephavenFigure
@@ -665,6 +667,9 @@ class DeephavenFigure:
             trace_generator: The trace generator
             has_subplots: If this figure has subplots
             is_plotly_fig: If this is a plotly figure
+            event_handlers: A mapping of plotly event names (e.g. "click") to
+                Python callables that should fire when the corresponding
+                event is raised on the client.
         """
         # keep track of function that called this, and it's args
         self._head_node = DeephavenHeadNode()
@@ -699,6 +704,10 @@ class DeephavenFigure:
         self._filter_columns = filter_columns if filter_columns else set()
 
         self._sent_filter_columns = False
+
+        self._event_handlers: dict[str, Callable] = (
+            dict(event_handlers) if event_handlers else {}
+        )
 
     def copy_mappings(self: DeephavenFigure, offset: int = 0) -> list[DataMapping]:
         """Copy all DataMappings within this figure, adding a specific offset
@@ -783,8 +792,36 @@ class DeephavenFigure:
             }
             self._sent_filter_columns = True
 
+        if self._event_handlers:
+            deephaven["events"] = sorted(self._event_handlers.keys())
+
         payload = {"plotly": plotly, "deephaven": deephaven}
         return json.dumps(payload)
+
+    @property
+    def event_handlers(self) -> dict[str, Callable]:
+        """The map of event-name -> handler for this figure.
+
+        Mutating the returned dict directly is supported but rarely needed;
+        handlers are normally registered as ``on_click=`` (etc.) kwargs on
+        the plot function.
+        """
+        return self._event_handlers
+
+    def set_event_handler(self, event_type: str, handler: Callable | None) -> None:
+        """Register or remove a handler for ``event_type``.
+
+        ``event_type`` must be one of ``EVENT_NAMES``. ``handler=None`` removes
+        any existing handler for that event.
+        """
+        if event_type not in EVENT_NAMES:
+            raise ValueError(
+                f"Unknown plotly event '{event_type}'. Valid: {EVENT_NAMES}"
+            )
+        if handler is None:
+            self._event_handlers.pop(event_type, None)
+        else:
+            self._event_handlers[event_type] = handler
 
     def add_layer_to_graph(
         self, layer_func: Callable, args: dict[str, Any], exec_ctx: ExecutionContext
@@ -1002,6 +1039,7 @@ class DeephavenFigure:
             self._is_plotly_fig,
             self._calendar,
             self._filter_columns,
+            self._event_handlers,
         )
         new_figure._head_node = self._head_node.copy_graph()
         return new_figure

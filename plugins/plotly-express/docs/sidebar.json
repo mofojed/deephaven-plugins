@@ -168,6 +168,10 @@
             "path": "unsafe-update-figure.md"
           },
           {
+            "label": "Event Handlers",
+            "path": "event-handlers.md"
+          },
+          {
             "label": "Static Image Export",
             "path": "static-image-export.md"
           }

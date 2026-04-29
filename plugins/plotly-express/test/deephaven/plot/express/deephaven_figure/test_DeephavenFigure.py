@@ -1,7 +1,52 @@
 from __future__ import annotations
+import json
 import unittest
 
 from ..BaseTest import BaseTestCase
+
+
+class DeephavenFigureEventsTestCase(BaseTestCase):
+    def test_to_json_omits_events_when_empty(self):
+        import src.deephaven.plot.express as dx
+
+        figure = dx.DeephavenFigure()
+        payload = json.loads(figure.to_json(self.exporter))
+        self.assertNotIn("events", payload["deephaven"])
+
+    def test_to_json_includes_events_when_registered(self):
+        import src.deephaven.plot.express as dx
+
+        figure = dx.DeephavenFigure()
+        figure.set_event_handler("click", lambda e: None)
+        figure.set_event_handler("select", lambda e: None)
+
+        payload = json.loads(figure.to_json(self.exporter))
+        self.assertEqual(payload["deephaven"]["events"], ["click", "select"])
+
+    def test_set_event_handler_rejects_unknown_event(self):
+        import src.deephaven.plot.express as dx
+
+        figure = dx.DeephavenFigure()
+        with self.assertRaises(ValueError):
+            figure.set_event_handler("not_an_event", lambda e: None)
+
+    def test_set_event_handler_none_clears(self):
+        import src.deephaven.plot.express as dx
+
+        figure = dx.DeephavenFigure()
+        figure.set_event_handler("click", lambda e: None)
+        figure.set_event_handler("click", None)
+        self.assertEqual(figure.event_handlers, {})
+
+    def test_copy_preserves_event_handlers(self):
+        import src.deephaven.plot.express as dx
+
+        handler = lambda e: None
+        figure = dx.DeephavenFigure()
+        figure.set_event_handler("click", handler)
+
+        copy = figure.copy()
+        self.assertIs(copy.event_handlers["click"], handler)
 
 
 class DeephavenFigureTestCase(BaseTestCase):

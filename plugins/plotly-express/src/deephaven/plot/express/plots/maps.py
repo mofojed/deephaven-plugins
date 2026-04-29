@@ -65,6 +65,13 @@ def scatter_geo(
     title: str | None = None,
     template: str | None = None,
     unsafe_update_figure: Callable = default_callback,
+    on_click: Callable | None = None,
+    on_select: Callable | None = None,
+    on_deselect: Callable | None = None,
+    on_hover: Callable | None = None,
+    on_unhover: Callable | None = None,
+    on_relayout: Callable | None = None,
+    on_legend_click: Callable | None = None,
 ) -> DeephavenFigure:
     """
     Create a scatter_geo plot
@@ -256,6 +263,13 @@ def scatter_map(
     title: str | None = None,
     template: str | None = None,
     unsafe_update_figure: Callable = default_callback,
+    on_click: Callable | None = None,
+    on_select: Callable | None = None,
+    on_deselect: Callable | None = None,
+    on_hover: Callable | None = None,
+    on_unhover: Callable | None = None,
+    on_relayout: Callable | None = None,
+    on_legend_click: Callable | None = None,
 ) -> DeephavenFigure:
     """
     Create a scatter_map plot
@@ -385,6 +399,13 @@ def line_geo(
     title: str | None = None,
     template: str | None = None,
     unsafe_update_figure: Callable = default_callback,
+    on_click: Callable | None = None,
+    on_select: Callable | None = None,
+    on_deselect: Callable | None = None,
+    on_hover: Callable | None = None,
+    on_unhover: Callable | None = None,
+    on_relayout: Callable | None = None,
+    on_legend_click: Callable | None = None,
 ) -> DeephavenFigure:
     """
     Create a line_geo plot
@@ -535,6 +556,13 @@ def line_map(
     title: str | None = None,
     template: str | None = None,
     unsafe_update_figure: Callable = default_callback,
+    on_click: Callable | None = None,
+    on_select: Callable | None = None,
+    on_deselect: Callable | None = None,
+    on_hover: Callable | None = None,
+    on_unhover: Callable | None = None,
+    on_relayout: Callable | None = None,
+    on_legend_click: Callable | None = None,
 ) -> DeephavenFigure:
     """
     Create a line_map plot
@@ -653,6 +681,13 @@ def density_map(
     title: str | None = None,
     template: str | None = None,
     unsafe_update_figure: Callable = default_callback,
+    on_click: Callable | None = None,
+    on_select: Callable | None = None,
+    on_deselect: Callable | None = None,
+    on_hover: Callable | None = None,
+    on_unhover: Callable | None = None,
+    on_relayout: Callable | None = None,
+    on_legend_click: Callable | None = None,
 ) -> DeephavenFigure:
     """
     Create a density_map plot

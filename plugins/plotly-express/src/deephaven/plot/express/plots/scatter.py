@@ -62,6 +62,13 @@ def scatter(
     render_mode: str = "webgl",
     calendar: Calendar = False,
     unsafe_update_figure: Callable = default_callback,
+    on_click: Callable | None = None,
+    on_select: Callable | None = None,
+    on_deselect: Callable | None = None,
+    on_hover: Callable | None = None,
+    on_unhover: Callable | None = None,
+    on_relayout: Callable | None = None,
+    on_legend_click: Callable | None = None,
 ) -> DeephavenFigure:
     """Returns a scatter chart
 
@@ -250,6 +257,13 @@ def scatter_3d(
     title: str | None = None,
     template: str | None = None,
     unsafe_update_figure: Callable = default_callback,
+    on_click: Callable | None = None,
+    on_select: Callable | None = None,
+    on_deselect: Callable | None = None,
+    on_hover: Callable | None = None,
+    on_unhover: Callable | None = None,
+    on_relayout: Callable | None = None,
+    on_legend_click: Callable | None = None,
 ) -> DeephavenFigure:
     """Returns a 3D scatter chart
 
@@ -407,6 +421,13 @@ def scatter_polar(
     template: str | None = None,
     render_mode: str = "webgl",
     unsafe_update_figure: Callable = default_callback,
+    on_click: Callable | None = None,
+    on_select: Callable | None = None,
+    on_deselect: Callable | None = None,
+    on_hover: Callable | None = None,
+    on_unhover: Callable | None = None,
+    on_relayout: Callable | None = None,
+    on_legend_click: Callable | None = None,
 ) -> DeephavenFigure:
     """Returns a polar scatter chart
 
@@ -538,6 +559,13 @@ def scatter_ternary(
     title: str | None = None,
     template: str | None = None,
     unsafe_update_figure: Callable = default_callback,
+    on_click: Callable | None = None,
+    on_select: Callable | None = None,
+    on_deselect: Callable | None = None,
+    on_hover: Callable | None = None,
+    on_unhover: Callable | None = None,
+    on_relayout: Callable | None = None,
+    on_legend_click: Callable | None = None,
 ) -> DeephavenFigure:
     """Returns a ternary scatter chart
 

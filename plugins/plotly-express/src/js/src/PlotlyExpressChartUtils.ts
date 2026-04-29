@@ -83,6 +83,8 @@ export interface PlotlyChartDeephavenData {
   }>;
   is_user_set_template: boolean;
   is_user_set_color: boolean;
+  /** Plotly event names (snake_case) that have a server-side handler registered. */
+  events?: string[];
 }
 
 export interface PlotlyChartWidgetData {

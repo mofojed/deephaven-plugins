@@ -138,6 +138,28 @@ candlestick_fig = dx.candlestick(
     ohlc_source, x="Timestamp", open="Open", high="High", low="Low", close="Close"
 )
 
+# Test event handlers — figure should still render cleanly with on_* kwargs.
+event_geo_source = new_table(
+    [
+        string_col("iso3", ["USA", "CAN", "MEX"]),
+        double_col("gdp", [21.4, 1.6, 1.3]),
+    ]
+)
+express_event_fig = dx.scatter_geo(
+    event_geo_source,
+    locations="iso3",
+    color="gdp",
+    on_click=lambda e: None,
+    on_select=lambda e: None,
+)
+
+express_event_bar = dx.bar(
+    express_source,
+    x="Categories",
+    y="Values",
+    on_click=lambda e: None,
+)
+
 # Add titles to subplots
 titles_fig = dx.make_subplots(
     dx.scatter(express_source, x="Values", y="Values2"),

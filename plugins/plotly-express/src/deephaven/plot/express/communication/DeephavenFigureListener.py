@@ -9,6 +9,7 @@ from deephaven.plugin.object_type import MessageStream
 from deephaven.table_listener import listen, TableUpdate
 from deephaven.liveness_scope import LivenessScope
 
+from ..events import dispatch as dispatch_event
 from ..exporter import Exporter
 from ..deephaven_figure import DeephavenFigure, DeephavenFigureNode, RevisionManager
 
@@ -183,6 +184,12 @@ class DeephavenFigureListener:
             except RuntimeError:
                 # trying to send data when the connection is closed, ignore
                 pass
+        elif message["type"] == "EVENT":
+            dispatch_event(
+                self._figure,
+                message.get("event_type", ""),
+                message.get("data", {}) or {},
+            )
         return b"", []
 
     def __del__(self):
