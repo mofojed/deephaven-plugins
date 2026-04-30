@@ -18,14 +18,18 @@ const POLL_TIMEOUT_MS = 5000;
 function findPlotElement(
   container: HTMLDivElement | null
 ): PlotlyHTMLElement | null {
-  if (!container) return null;
+  if (container == null) return null;
   return container.querySelector<PlotlyHTMLElement>('.js-plotly-plot');
 }
 
 /**
- * Attach plotly DOM listeners for every event the server has registered
- * a handler for. Re-runs when the model or revision changes (handlers can
- * be re-declared on each NEW_FIGURE message).
+ * Attach plotly DOM listeners for every event the server has registered a
+ * handler for.
+ *
+ * `container` should be a state value driven by a callback ref (or any
+ * setter that triggers a re-render when the wrapper mounts). Passing
+ * `someRef.current` directly does not work — refs do not trigger
+ * re-renders, so this hook would only ever see the initial null value.
  */
 export function usePlotlyEvents(
   model: PlotlyExpressChartModel | undefined,
@@ -33,7 +37,7 @@ export function usePlotlyEvents(
   widgetRevision: number
 ): void {
   useEffect(() => {
-    if (!model || !container) return undefined;
+    if (!model || container == null) return undefined;
 
     let cancelled = false;
     let timeoutId: number | undefined;
@@ -46,7 +50,7 @@ export function usePlotlyEvents(
     const tryAttach = () => {
       if (cancelled) return;
       const plotEl = findPlotElement(container);
-      if (plotEl && typeof plotEl.on === 'function') {
+      if (plotEl != null && typeof plotEl.on === 'function') {
         attachEventListeners(
           plotEl,
           model.getRegisteredEvents(),
@@ -69,7 +73,7 @@ export function usePlotlyEvents(
       cancelled = true;
       if (timeoutId !== undefined) window.clearTimeout(timeoutId);
       window.clearTimeout(giveUpId);
-      if (attachedTo) {
+      if (attachedTo != null) {
         detachEventListeners(attachedTo);
       }
     };

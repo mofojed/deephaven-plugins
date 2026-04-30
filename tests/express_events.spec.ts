@@ -1,23 +1,121 @@
 import { expect, test } from '@playwright/test';
-import { gotoPage, openPanel, SELECTORS } from './utils';
+import { gotoPage, openPanel } from './utils';
 
-// Smoke tests that verify plotly-express figures render cleanly when
-// event-handler kwargs (on_click, on_select, ...) are present. The handler
-// dispatch round-trip is exercised by Python and JS unit tests; here we just
-// confirm that registering handlers does not break the chart.
+// End-to-end verification that a plotly click on a chart with a registered
+// `on_click=` handler round-trips a sanitized EVENT message. The model
+// stashes the most recent sendEvent payload on window for assertion.
+async function waitForPlotReady(page: import('@playwright/test').Page) {
+  await page.waitForFunction(() => {
+    const el = document.querySelector('.js-plotly-plot') as
+      | (HTMLElement & { on?: unknown })
+      | null;
+    return el != null && typeof el.on === 'function';
+  });
+  // Give usePlotlyEvents a moment to attach (it polls at 50ms).
+  await page.waitForTimeout(200);
+}
+
+async function emitPlotlyClick(
+  page: import('@playwright/test').Page,
+  point: Record<string, unknown>
+) {
+  await page.evaluate(p => {
+    /* eslint-disable no-underscore-dangle */
+    const w = window as unknown as Record<string, unknown>;
+    w.__plotlyExpressLastEvent = null;
+    /* eslint-enable no-underscore-dangle */
+    const el = document.querySelector('.js-plotly-plot') as
+      | (HTMLElement & {
+          emit?: (evt: string, data: unknown) => void;
+        })
+      | null;
+    if (el == null || typeof el.emit !== 'function') {
+      throw new Error('plot element does not expose emit()');
+    }
+    el.emit('plotly_click', { points: [p] });
+  }, point);
+}
+
+async function readLastEvent(page: import('@playwright/test').Page) {
+  return page.evaluate(() => {
+    /* eslint-disable no-underscore-dangle */
+    return (window as unknown as Record<string, unknown>)
+      .__plotlyExpressLastEvent;
+    /* eslint-enable no-underscore-dangle */
+  });
+}
+
 test.describe('plotly-express event handlers', () => {
-  ['express_event_fig', 'express_event_bar'].forEach(name => {
-    test(`${name} renders with handlers registered`, async ({ page }) => {
-      await gotoPage(page, '');
-      await openPanel(page, name, SELECTORS.REACT_PANEL_VISIBLE);
+  test('scatter_geo with on_click attaches a listener and click sends EVENT', async ({
+    page,
+  }) => {
+    await gotoPage(page, '');
+    await openPanel(page, 'express_event_fig', '.js-plotly-plot');
 
-      // Plotly graph div is present under the panel body — chart finished
-      // mounting and event listeners (if any) are attached.
-      const panel = page.locator(SELECTORS.REACT_PANEL_VISIBLE);
-      await expect(panel.locator('.js-plotly-plot')).toBeVisible();
+    await expect(
+      page.locator('.iris-chart-panel').locator('.js-plotly-plot')
+    ).toBeVisible();
+    await waitForPlotReady(page);
 
-      // No error overlay surfaced from the listener attaching.
-      await expect(panel.locator('.chart-panel-error')).toHaveCount(0);
+    await emitPlotlyClick(page, {
+      curveNumber: 0,
+      pointIndex: 0,
+      pointNumber: 0,
+      location: 'USA',
+      lat: 39.5,
+      lon: -98.35,
     });
+
+    expect(await readLastEvent(page)).toMatchObject({
+      eventType: 'click',
+      data: {
+        points: [
+          expect.objectContaining({
+            curveNumber: 0,
+            pointIndex: 0,
+            location: 'USA',
+          }),
+        ],
+      },
+    });
+  });
+
+  test('bar with on_click forwards a click', async ({ page }) => {
+    await gotoPage(page, '');
+    await openPanel(page, 'express_event_bar', '.js-plotly-plot');
+
+    await expect(
+      page.locator('.iris-chart-panel').locator('.js-plotly-plot')
+    ).toBeVisible();
+    await waitForPlotReady(page);
+
+    await emitPlotlyClick(page, {
+      curveNumber: 0,
+      pointIndex: 1,
+      x: 'B',
+      y: 3,
+    });
+
+    expect(await readLastEvent(page)).toMatchObject({
+      eventType: 'click',
+      data: {
+        points: [expect.objectContaining({ pointIndex: 1, x: 'B', y: 3 })],
+      },
+    });
+  });
+
+  test('figure without handlers emits no EVENT on click', async ({ page }) => {
+    await gotoPage(page, '');
+    // express_fig is the existing fixture, no on_click registered.
+    await openPanel(page, 'express_fig', '.js-plotly-plot');
+
+    await expect(
+      page.locator('.iris-chart-panel').locator('.js-plotly-plot')
+    ).toBeVisible();
+    await waitForPlotReady(page);
+
+    await emitPlotlyClick(page, { curveNumber: 0, pointIndex: 0 });
+
+    expect(await readLastEvent(page)).toBeNull();
   });
 });

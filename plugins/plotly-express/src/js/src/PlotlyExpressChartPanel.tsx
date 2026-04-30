@@ -9,6 +9,7 @@ import { type WidgetPanelProps } from '@deephaven/plugin';
 import { useApi } from '@deephaven/jsapi-bootstrap';
 import PlotlyExpressChartModel from './PlotlyExpressChartModel.js';
 import { useHandleSceneTicks } from './useHandleSceneTicks.js';
+import { usePlotlyEvents } from './usePlotlyEvents.js';
 
 export function PlotlyExpressChartPanel(
   props: WidgetPanelProps<dh.Widget>
@@ -26,6 +27,9 @@ export function PlotlyExpressChartPanel(
   }, [dh, fetch]);
 
   useHandleSceneTicks(model, container);
+  // ChartPanel does not expose widget revisions; the panel does not
+  // remount the chart on figure changes, so a fixed revision is fine.
+  usePlotlyEvents(model, container, 0);
 
   return (
     <ChartPanel

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import Plotly from 'plotly.js-dist-min';
 import { Chart } from '@deephaven/chart';
@@ -15,7 +15,11 @@ export function PlotlyExpressChart(
 ): JSX.Element | null {
   const dh = useApi();
   const { fetch } = props;
-  const containerRef = useRef<HTMLDivElement>(null);
+  // Callback ref + state so that hooks downstream of the wrapper actually
+  // see the mounted DOM node. A bare useRef does not trigger re-renders
+  // when assigned, so an effect keyed on `ref.current` would only ever
+  // observe the initial null value.
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const [model, setModel] = useState<PlotlyExpressChartModel>();
   const settings = useSelector(getSettings<RootState>);
   const [widgetRevision, setWidgetRevision] = useState(0); // Used to force a clean chart state on widget change
@@ -37,15 +41,15 @@ export function PlotlyExpressChart(
     };
   }, [dh, fetch]);
 
-  useHandleSceneTicks(model, containerRef.current);
-  usePlotlyEvents(model, containerRef.current, widgetRevision);
+  useHandleSceneTicks(model, container);
+  usePlotlyEvents(model, container, widgetRevision);
 
   return model ? (
     <Chart
       // eslint-disable-next-line react/jsx-props-no-spreading, @typescript-eslint/ban-ts-comment
       // @ts-ignore
       key={widgetRevision}
-      containerRef={containerRef}
+      containerRef={setContainer}
       model={model}
       settings={settings}
       Plotly={Plotly}

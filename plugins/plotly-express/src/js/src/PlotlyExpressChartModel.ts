@@ -946,6 +946,15 @@ export class PlotlyExpressChartModel extends ChartModel {
    * PlotlyEventBridge after a plotly DOM listener fires.
    */
   sendEvent(eventType: string, data: unknown): void {
+    log.debug('sendEvent', eventType, data);
+    // Test hook: surface the most recent event on `window` so Playwright
+    // specs can verify the round-trip without intercepting WebSocket frames.
+    /* eslint-disable no-underscore-dangle */
+    if (typeof window !== 'undefined') {
+      const w = window as unknown as Record<string, unknown>;
+      w.__plotlyExpressLastEvent = { eventType, data };
+    }
+    /* eslint-enable no-underscore-dangle */
     this.widget?.sendMessage(
       JSON.stringify({
         type: 'EVENT',

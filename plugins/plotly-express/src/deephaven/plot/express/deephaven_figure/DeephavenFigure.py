@@ -942,6 +942,13 @@ class DeephavenFigure:
             # filters are managed through the nodes, so attach them when creating the figure
             figure.filter_columns = self._head_node.filter_columns
 
+        if figure is not None:
+            # event handlers are registered on the outer DeephavenFigure (the
+            # one returned to the user from the plot function), but to_json
+            # is called on the inner figure produced by the head node, so
+            # forward the handlers through.
+            figure._event_handlers = self._event_handlers
+
         return figure
 
     def get_plotly_fig(self) -> Figure | None:
