@@ -47,6 +47,9 @@ from .plots import (
     scatter_map,
     density_map,
     line_map,
+    choropleth,
+    choropleth_map,
+    choropleth_mapbox,
 )
 
 from .data import data_generators
