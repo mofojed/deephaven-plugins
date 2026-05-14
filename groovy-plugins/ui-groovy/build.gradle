@@ -43,6 +43,9 @@ dependencies {
     // Tests that instantiate ObjectType subclasses (DashboardType/ElementType) need the SPI on
     // the test classpath; compileOnly above only puts it on the main classpath.
     testImplementation "io.deephaven:deephaven-plugin:${deephavenVersion}"
+    // Ui.groovy references engine-api/engine-context types; the test compiler needs them too.
+    testImplementation "io.deephaven:deephaven-engine-api:${deephavenVersion}"
+    testImplementation "io.deephaven:deephaven-engine-context:${deephavenVersion}"
 }
 
 // Copy the JS bundle produced by the Python plugin's build into this JAR's resources.

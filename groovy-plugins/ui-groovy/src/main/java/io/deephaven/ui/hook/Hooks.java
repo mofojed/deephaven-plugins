@@ -1,14 +1,17 @@
 package io.deephaven.ui.hook;
 
 import groovy.lang.Closure;
+import io.deephaven.ui.element.UiContext;
 import io.deephaven.ui.event.EventContext;
 import io.deephaven.ui.render.RenderContext;
 import io.deephaven.ui.render.UiCallable;
 
+import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -146,6 +149,49 @@ public final class Hooks {
     public static BiConsumer<String, Map<String, Object>> useSendEvent() {
         EventContext ctx = EventContext.current();
         return ctx::sendEvent;
+    }
+
+    /**
+     * Convenience hook for boolean state. Equivalent to Python's {@code use_boolean}. The returned
+     * {@link BooleanState} is Groovy-destructurable ({@code def (val, set) = Ui.useBoolean()});
+     * the setter acts like a normal setter and also exposes {@code on()}, {@code off()}, and
+     * {@code toggle()} for cleaner callsites.
+     */
+    public static BooleanState useBoolean(boolean initial) {
+        StateTuple<Boolean> state = useState(initial);
+        UiCallable setter = state.setter();
+        Runnable on = useCallback((Runnable) () -> setter.call(Boolean.TRUE), List.of(setter));
+        Runnable off = useCallback((Runnable) () -> setter.call(Boolean.FALSE), List.of(setter));
+        Runnable toggle = useCallback(
+                (Runnable) () -> setter.call((Function<Object, Object>) old -> !((Boolean) old)),
+                List.of(setter));
+        BooleanSetter bool = useMemo(() -> new BooleanSetter(setter, on, off, toggle),
+                List.of(setter, on, off, toggle));
+        return new BooleanState(state.value(), bool);
+    }
+
+    /** @see #useBoolean(boolean) */
+    public static BooleanState useBoolean() {
+        return useBoolean(false);
+    }
+
+    /**
+     * Returns a callable for queueing work onto the render thread. Equivalent to Python's
+     * {@code use_render_queue}. Useful for state updates that originate from background threads.
+     */
+    public static Consumer<Runnable> useRenderQueue() {
+        RenderContext ctx = RenderContext.current();
+        return ctx::queueRender;
+    }
+
+    /**
+     * Read the current value of a {@link UiContext}. The active provider's value if any, otherwise
+     * the context's default value. Must be called inside a render. Equivalent to Python's
+     * {@code use_context}.
+     */
+    public static <T> T useContext(UiContext<T> context) {
+        RenderContext.current(); // ensure we're rendering
+        return context.currentValue();
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})

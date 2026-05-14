@@ -4,9 +4,14 @@ import io.deephaven.ui.element.BaseElement
 import io.deephaven.ui.element.DashboardElement
 import io.deephaven.ui.element.Element
 import io.deephaven.ui.element.FunctionElement
+import io.deephaven.ui.element.UiContext
+import io.deephaven.ui.hook.BooleanSetter
+import io.deephaven.ui.hook.BooleanState
+import io.deephaven.ui.hook.ExecutionContextHooks
 import io.deephaven.ui.hook.Hooks
 import io.deephaven.ui.hook.LiveHooks
 import io.deephaven.ui.hook.Ref
+import io.deephaven.ui.hook.RoutingHooks
 import io.deephaven.ui.hook.StateTuple
 import io.deephaven.ui.util.PropCase
 
@@ -77,6 +82,54 @@ class Ui {
     static java.util.function.BiConsumer<String, Map<String, Object>> useSendEvent() {
         Hooks.useSendEvent()
     }
+
+    /**
+     * Convenience hook for boolean state. Returns {@link BooleanState}; destructurable in Groovy
+     * ({@code def (val, set) = Ui.useBoolean()}). The setter is callable AND exposes
+     * {@code .on()}, {@code .off()}, {@code .toggle()}.
+     */
+    static BooleanState useBoolean(boolean initial = false) {
+        Hooks.useBoolean(initial)
+    }
+
+    /** A callable that schedules work onto the render thread. For background-thread state updates. */
+    static java.util.function.Consumer<Runnable> useRenderQueue() {
+        Hooks.useRenderQueue()
+    }
+
+    /** Wrap a runnable to execute inside the current (or provided) deephaven ExecutionContext. */
+    static java.util.function.Consumer<Runnable> useExecutionContext(
+            io.deephaven.engine.context.ExecutionContext ctx = null) {
+        ExecutionContextHooks.useExecutionContext(ctx)
+    }
+
+    // ─── routing hooks ────────────────────────────────────────────────────────────────────
+
+    /** Read the full URL query-parameter map. */
+    static Map<String, List<String>> useQueryParams() { RoutingHooks.useQueryParams() }
+
+    /** Read a single query parameter as a String (last value if repeated). */
+    static String useQueryParam(String key, String defaultValue = null) {
+        RoutingHooks.useQueryParam(key, defaultValue)
+    }
+
+    /** Read a single query parameter as a {@code List<String>} (or the default if absent). */
+    static List<String> useQueryParam(String key, List<String> defaultValue) {
+        RoutingHooks.useQueryParam(key, defaultValue)
+    }
+
+    /** Get a setter for a single query parameter. The setter accepts null / String / List<String>. */
+    static RoutingHooks.SetQueryParam useSetQueryParam(String key) {
+        RoutingHooks.useSetQueryParam(key)
+    }
+
+    // ─── context ──────────────────────────────────────────────────────────────────────────
+
+    /** Create a new {@link UiContext} carrying values of any type with the given default. */
+    static <T> UiContext<T> createContext(T defaultValue) { new UiContext<>(defaultValue) }
+
+    /** Read the current value of a {@link UiContext} (nearest provider, or the default). */
+    static <T> T useContext(UiContext<T> context) { Hooks.useContext(context) }
 
     // ─── live-data hooks ──────────────────────────────────────────────────────────────────
 

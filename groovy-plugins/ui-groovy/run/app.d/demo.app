@@ -8,3 +8,4 @@ file_1=showcase.groovy
 file_2=dashboard_demo.groovy
 file_3=toast_demo.groovy
 file_4=table_demo.groovy
+file_5=hooks_demo.groovy

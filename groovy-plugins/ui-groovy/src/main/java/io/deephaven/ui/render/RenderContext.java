@@ -33,6 +33,7 @@ public final class RenderContext {
     private final List<Effect> collectedEffects = new ArrayList<>();
     private final List<Runnable> collectedUnmountListeners = new ArrayList<>();
     private final List<String> collectedContexts = new ArrayList<>();
+    private final List<Runnable> openCleanups = new ArrayList<>();
 
     public RenderContext(RootRenderContext root) {
         this.root = root;
@@ -89,6 +90,17 @@ public final class RenderContext {
             closed = true;
 
             try {
+                // Run open-context cleanups in reverse registration order (matches Python). These
+                // typically pop values pushed by ContextProviderElement so the next sibling sees
+                // the right context value.
+                for (int i = openCleanups.size() - 1; i >= 0; i--) {
+                    try {
+                        openCleanups.get(i).run();
+                    } catch (RuntimeException ignored) {
+                    }
+                }
+                openCleanups.clear();
+
                 Set<String> currentKeys = new HashSet<>(collectedContexts);
                 for (String key : oldContextKeys) {
                     if (!currentKeys.contains(key)) {
@@ -224,6 +236,16 @@ public final class RenderContext {
     public void addUnmountListener(Runnable listener) {
         assertActive();
         collectedUnmountListeners.add(listener);
+    }
+
+    /**
+     * Register a callback to fire after children of this context have rendered but before unmount
+     * listeners / effects run. Used by {@link io.deephaven.ui.element.ContextProviderElement} to
+     * pop its value off the {@link io.deephaven.ui.element.UiContext} stack.
+     */
+    public void addOpenCleanup(Runnable cleanup) {
+        assertActive();
+        openCleanups.add(cleanup);
     }
 
     public ExportedRenderState exportState() {
