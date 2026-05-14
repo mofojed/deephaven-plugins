@@ -1,11 +1,14 @@
 package io.deephaven.ui.hook;
 
 import groovy.lang.Closure;
+import io.deephaven.ui.event.EventContext;
 import io.deephaven.ui.render.RenderContext;
 import io.deephaven.ui.render.UiCallable;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -130,6 +133,15 @@ public final class Hooks {
             effect.run();
             return null;
         }, dependencies);
+    }
+
+    /**
+     * Returns a function for sending client-side events to the JS plugin. Equivalent to Python's
+     * {@code use_send_event}. The returned callable forwards to the active {@link EventContext}.
+     */
+    public static BiConsumer<String, Map<String, Object>> useSendEvent() {
+        EventContext ctx = EventContext.current();
+        return ctx::sendEvent;
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})

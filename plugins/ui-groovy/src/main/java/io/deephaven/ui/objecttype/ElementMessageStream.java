@@ -6,6 +6,7 @@ import com.flipkart.zjsonpatch.JsonDiff;
 import groovy.lang.Closure;
 import io.deephaven.ui.element.Element;
 import io.deephaven.ui.element.RenderedNode;
+import io.deephaven.ui.event.EventContext;
 import io.deephaven.ui.jsonrpc.JsonRpcDispatcher;
 import io.deephaven.ui.render.ExportedRenderState;
 import io.deephaven.ui.render.NodeEncoder;
@@ -66,6 +67,7 @@ public final class ElementMessageStream implements ClientConnection, RootRenderC
 
     private final RenderContext rootContext;
     private final Renderer renderer;
+    private final EventContext eventContext;
     private JsonNode lastDocument;
     private Map<String, List<String>> queryParams = new HashMap<>();
 
@@ -89,6 +91,7 @@ public final class ElementMessageStream implements ClientConnection, RootRenderC
         this.dispatcher = new JsonRpcDispatcher(mapper);
         this.rootContext = new RenderContext(this);
         this.renderer = new Renderer(rootContext);
+        this.eventContext = new EventContext(this::sendEvent);
         this.lastDocument = mapper.createObjectNode();
         registerDispatcherMethods();
     }
@@ -176,7 +179,7 @@ public final class ElementMessageStream implements ClientConnection, RootRenderC
     }
 
     private void processCallableQueue() {
-        try {
+        try (AutoCloseable eventScope = eventContext.open()) {
             synchronized (renderLock) {
                 renderThread = Thread.currentThread();
                 renderState.set(RenderState.RENDERING);
@@ -206,6 +209,12 @@ public final class ElementMessageStream implements ClientConnection, RootRenderC
             }
         } catch (RuntimeException e) {
             // Catastrophic failure — close the connection so the client doesn't hang.
+            try {
+                connection.onClose();
+            } catch (RuntimeException ignored) {
+            }
+        } catch (Exception e) {
+            // AutoCloseable.close() may throw checked Exception; treat the same way.
             try {
                 connection.onClose();
             } catch (RuntimeException ignored) {
@@ -256,6 +265,22 @@ public final class ElementMessageStream implements ClientConnection, RootRenderC
         String payload = dispatcher.notification("documentPatched", patch, stateJson);
         Object[] newRefs = result.newObjects.toArray(new Object[0]);
         connection.onData(payload.getBytes(StandardCharsets.UTF_8), newRefs);
+    }
+
+    /** Emit a client-side event ({@code event} notification). Called by the {@link EventContext}. */
+    private void sendEvent(String name, Map<String, Object> params) {
+        if (closed) {
+            return;
+        }
+        Object encodedParams = serializeResultCallables(params == null ? Collections.emptyMap() : params);
+        String encodedJson;
+        try {
+            encodedJson = mapper.writeValueAsString(encodedParams);
+        } catch (Exception e) {
+            encodedJson = "{}";
+        }
+        String payload = dispatcher.notification("event", name, encodedJson);
+        connection.onData(payload.getBytes(StandardCharsets.UTF_8), new Object[0]);
     }
 
     private void sendDocumentError(Throwable error) {

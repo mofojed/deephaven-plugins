@@ -4,12 +4,18 @@ JVM-native (Java + Groovy) backend for the `deephaven.ui` widget. Produces the
 same wire output as the existing Python plugin so the shipped JS plugin
 (`@deephaven/js-plugin-ui`) works against it unchanged.
 
-This is an MVP. The full Python API has ~85 components and 21 hooks; this
-module covers the framework core plus a starter set:
+Covers ~70 of the Python plugin's ~85 components plus the raw HTML elements:
 
-- Hooks: `useState`, `useEffect`, `useCallback`, `useMemo`, `useRef`
-- Components: `text`, `heading`, `button`, `actionButton`, `flex`, `view`,
-  `fragment`, `textField`, `checkbox`, `switch_`
+- Hooks: `useState`, `useEffect`, `useCallback`, `useMemo`, `useRef`, `useSendEvent`
+- Components: nearly all Spectrum components (button, flex, view, picker, combo_box,
+  date_picker, dialog, menu, tabs, slider, progress_bar, …)
+- `Ui.dashboard(element)` for multi-panel layouts
+- `Ui.toast(message, options)` for transient notifications
+- `Html.*` for raw HTML elements (`Html.div`, `Html.h1`, `Html.p`, …)
+
+Deferred to a follow-up: `ui.table`, `ui.item_table_source`, live-data hooks
+(`use_table_data`, `use_table_listener`, `use_row_data`, `use_cell_data`,
+`use_column_data`), and routing hooks.
 
 ## Example
 

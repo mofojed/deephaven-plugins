@@ -5,3 +5,5 @@ id=ui.groovy.demo
 name=UI Groovy Demo
 file_0=counter.groovy
 file_1=showcase.groovy
+file_2=dashboard_demo.groovy
+file_3=toast_demo.groovy

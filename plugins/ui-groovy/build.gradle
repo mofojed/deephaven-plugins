@@ -33,6 +33,9 @@ dependencies {
     testImplementation 'org.spockframework:spock-core:2.3-groovy-4.0'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    // Tests that instantiate ObjectType subclasses (DashboardType/ElementType) need the SPI on
+    // the test classpath; compileOnly above only puts it on the main classpath.
+    testImplementation "io.deephaven:deephaven-plugin:${deephavenVersion}"
 }
 
 // Copy the JS bundle produced by the Python plugin's build into this JAR's resources.

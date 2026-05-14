@@ -18,8 +18,10 @@ public final class UiRegistration implements Registration {
 
     @Override
     public void registerInto(Callback callback) {
-        callback.register(new ElementType());
+        // DashboardType must be registered BEFORE ElementType: DashboardElement is also an
+        // Element, so a broad-first registration would route dashboards through the Element type.
         callback.register(new DashboardType());
+        callback.register(new ElementType());
         callback.register(new UiJsPlugin());
     }
 }

@@ -1,11 +1,13 @@
 package io.deephaven.ui
 
 import io.deephaven.ui.element.BaseElement
+import io.deephaven.ui.element.DashboardElement
 import io.deephaven.ui.element.Element
 import io.deephaven.ui.element.FunctionElement
 import io.deephaven.ui.hook.Hooks
 import io.deephaven.ui.hook.Ref
 import io.deephaven.ui.hook.StateTuple
+import io.deephaven.ui.util.PropCase
 
 /**
  * Public Groovy API for the deephaven.ui plugin. Mirrors the Python {@code import deephaven.ui as ui}
@@ -68,6 +70,55 @@ class Ui {
             def result = effect.call()
             (result instanceof Runnable) ? (Runnable) result : null
         }, dependencies)
+    }
+
+    /** Get a callable for emitting client-side events. {@code sendEvent.call(name, params)}. */
+    static java.util.function.BiConsumer<String, Map<String, Object>> useSendEvent() {
+        Hooks.useSendEvent()
+    }
+
+    // ─── dashboard ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Wrap an element as the root of a dashboard. The element should render a layout that contains
+     * one root row, column, stack, or panel. Server registers this under
+     * {@code "deephaven.ui.Dashboard"} so the JS plugin opens the dashboard container.
+     */
+    static Element dashboard(Element element) {
+        new DashboardElement(element)
+    }
+
+    // ─── toast ─────────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Display a transient toast notification on the client. Must be called on the render thread
+     * (i.e., inside a component closure or a callback) — the active event context is found via
+     * {@link Hooks#useSendEvent}.
+     *
+     * <p>Named-arg style: {@code Ui.toast("Saved", variant: 'positive', actionLabel: 'Undo')}.
+     * Groovy collapses the named args into the leading {@code Map} per its calling conventions.
+     *
+     * @param options {@code variant} (neutral|positive|negative|info), {@code actionLabel},
+     *                {@code onAction}, {@code shouldCloseOnAction}, {@code onClose}, {@code timeout}, {@code id}.
+     * @param message the toast message
+     */
+    static void toast(Map options, String message) {
+        Map params = new LinkedHashMap()
+        params.put('message', message)
+        // The JS plugin requires variant to be present (matches Python's default of "neutral").
+        params.put('variant', 'neutral')
+        if (options != null) {
+            params.putAll(options)
+        }
+        // Match the Python plugin: snake_case → camelCase conversion + drop nulls. Lets users pass
+        // either action_label or actionLabel.
+        Map encoded = PropCase.dictToReactProps(params)
+        useSendEvent().accept('toast.event', (Map<String, Object>) encoded)
+    }
+
+    /** Plain message toast (no options). */
+    static void toast(String message) {
+        toast([:], message)
     }
 
     // ─── components ────────────────────────────────────────────────────────────────────────
