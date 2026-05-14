@@ -47,7 +47,7 @@ dependencies {
 
 // Copy the JS bundle produced by the Python plugin's build into this JAR's resources.
 def jsBundleSource = project.findProperty('jsBundleSource')
-        ?: rootProject.file('../ui/src/deephaven/ui/_js/dist')
+        ?: rootProject.file('../../plugins/ui/src/deephaven/ui/_js/dist')
 
 tasks.register('copyJsBundle', Copy) {
     description = 'Copy the @deephaven/js-plugin-ui bundle into the JAR resources.'

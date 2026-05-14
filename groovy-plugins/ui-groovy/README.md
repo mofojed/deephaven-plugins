@@ -70,7 +70,7 @@ just built. Edit `app.d/counter.groovy` to try other components.
 
 `docker compose down` to stop.
 
-The JS bundle is copied from `../ui/src/deephaven/ui/_js/dist` into the JAR's
-resources. If the Python plugin hasn't been built yet, that directory may not
-exist; the copy task is tolerant and you can pass `-PjsBundleSource=<dir>` to
-override the location.
+The JS bundle is copied from `../../plugins/ui/src/deephaven/ui/_js/dist` into
+the JAR's resources. If the Python plugin hasn't been built yet, that directory
+may not exist; the copy task is tolerant and you can pass `-PjsBundleSource=<dir>`
+to override the location.
