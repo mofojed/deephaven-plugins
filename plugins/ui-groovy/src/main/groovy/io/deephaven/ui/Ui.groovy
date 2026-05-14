@@ -5,6 +5,7 @@ import io.deephaven.ui.element.DashboardElement
 import io.deephaven.ui.element.Element
 import io.deephaven.ui.element.FunctionElement
 import io.deephaven.ui.hook.Hooks
+import io.deephaven.ui.hook.LiveHooks
 import io.deephaven.ui.hook.Ref
 import io.deephaven.ui.hook.StateTuple
 import io.deephaven.ui.util.PropCase
@@ -77,6 +78,39 @@ class Ui {
         Hooks.useSendEvent()
     }
 
+    // ─── live-data hooks ──────────────────────────────────────────────────────────────────
+
+    /**
+     * Subscribe to a Deephaven Table's updates. The listener fires on the UpdateGraph thread.
+     * No-op for null or static tables. Cleanup on unmount or dependency change is automatic.
+     */
+    static void useTableListener(Object table, Closure listener, List dependencies = []) {
+        LiveHooks.useTableListener((io.deephaven.engine.table.Table) table,
+                { update, isReplay -> listener.call(update, isReplay) }
+                        as java.util.function.BiConsumer,
+                dependencies)
+    }
+
+    /** Snapshot the table as a list of {@code Map<columnName, value>}. Re-renders on each tick. */
+    static List useTableData(Object table) {
+        LiveHooks.useTableData((io.deephaven.engine.table.Table) table)
+    }
+
+    /** First row of the table (or null if empty). */
+    static Map useRowData(Object table) {
+        LiveHooks.useRowData((io.deephaven.engine.table.Table) table)
+    }
+
+    /** Top-left cell of the table (or null if empty). */
+    static Object useCellData(Object table) {
+        LiveHooks.useCellData((io.deephaven.engine.table.Table) table)
+    }
+
+    /** First column of the table as a list of values. */
+    static List useColumnData(Object table) {
+        LiveHooks.useColumnData((io.deephaven.engine.table.Table) table)
+    }
+
     // ─── dashboard ─────────────────────────────────────────────────────────────────────────
 
     /**
@@ -134,6 +168,47 @@ class Ui {
         new BaseElement(COMPONENT_NAME_PREFIX + name, childList, key, normalized)
     }
 
+    /**
+     * Build an item from a {@link #itemTableSource} (table + column-name annotations) which can be
+     * passed as the sole child of {@link #picker}, {@link #comboBox}, or {@link #listView}.
+     *
+     * @param props {@code keyColumn}, {@code labelColumn}, {@code descriptionColumn},
+     *              {@code iconColumn}, {@code titleColumn}, {@code actions}.
+     * @param table the Deephaven Table (or {@code PartitionedTable}) supplying the rows.
+     */
+    static Map itemTableSource(Map props, Object tableArg) {
+        Map m = new LinkedHashMap()
+        m.put('table', tableArg)
+        if (props != null) {
+            m.putAll(props)
+        }
+        return m
+    }
+
+    /** {@code Ui.itemTableSource(myTable)} — no column annotations. */
+    static Map itemTableSource(Object tableArg) {
+        itemTableSource([:], tableArg)
+    }
+
+    /**
+     * Like {@link #componentElement} but, if the single child is a Map (i.e., from
+     * {@link #itemTableSource}), unpacks it: the Map's {@code table} entry becomes the single
+     * child and the rest of its entries are merged into the component's props.
+     * Mirrors Python's {@code unpack_item_table_source}.
+     */
+    private static Element unpackingComponentElement(String name, Map props, Object... children) {
+        Map mergedProps = (props == null) ? new LinkedHashMap() : new LinkedHashMap(props)
+        Object[] mergedChildren = children
+        if (children != null && children.length == 1 && children[0] instanceof Map) {
+            Map source = new LinkedHashMap((Map) children[0])
+            Object table = source.remove('table')
+            // Merge the remaining keys (keyColumn / labelColumn / etc.) into props.
+            mergedProps.putAll(source)
+            mergedChildren = (table == null) ? new Object[0] : [table] as Object[]
+        }
+        return componentElement(name, mergedProps, mergedChildren)
+    }
+
     static Element accordion(Map props = [:], Object... children) { componentElement('Accordion', props, children) }
     static Element actionButton(Map props = [:], Object... children) { componentElement('ActionButton', props, children) }
     static Element actionGroup(Map props = [:], Object... children) { componentElement('ActionGroup', props, children) }
@@ -149,7 +224,7 @@ class Ui {
     static Element colorEditor(Map props = [:], Object... children) { componentElement('ColorEditor', props, children) }
     static Element colorPicker(Map props = [:], Object... children) { componentElement('ColorPicker', props, children) }
     static Element column(Map props = [:], Object... children) { componentElement('Column', props, children) }
-    static Element comboBox(Map props = [:], Object... children) { componentElement('ComboBox', props, children) }
+    static Element comboBox(Map props = [:], Object... children) { unpackingComponentElement('ComboBox', props, children) }
     static Element content(Map props = [:], Object... children) { componentElement('Content', props, children) }
     static Element contextualHelp(Map props = [:], Object... children) { componentElement('ContextualHelp', props, children) }
     static Element contextualHelpTrigger(Map props = [:], Object... children) { componentElement('ContextualHelpTrigger', props, children) }
@@ -177,7 +252,7 @@ class Ui {
     static Element link(Map props = [:], Object... children) { componentElement('Link', props, children) }
     static Element listActionGroup(Map props = [:], Object... children) { componentElement('ListActionGroup', props, children) }
     static Element listActionMenu(Map props = [:], Object... children) { componentElement('ListActionMenu', props, children) }
-    static Element listView(Map props = [:], Object... children) { componentElement('ListView', props, children) }
+    static Element listView(Map props = [:], Object... children) { unpackingComponentElement('ListView', props, children) }
     static Element logicButton(Map props = [:], Object... children) { componentElement('LogicButton', props, children) }
     static Element markdown(Map props = [:], Object... children) { componentElement('Markdown', props, children) }
     static Element menu(Map props = [:], Object... children) { componentElement('Menu', props, children) }
@@ -185,7 +260,7 @@ class Ui {
     static Element meter(Map props = [:], Object... children) { componentElement('Meter', props, children) }
     static Element numberField(Map props = [:], Object... children) { componentElement('NumberField', props, children) }
     static Element panel(Map props = [:], Object... children) { componentElement('Panel', props, children) }
-    static Element picker(Map props = [:], Object... children) { componentElement('Picker', props, children) }
+    static Element picker(Map props = [:], Object... children) { unpackingComponentElement('Picker', props, children) }
     static Element progressBar(Map props = [:], Object... children) { componentElement('ProgressBar', props, children) }
     static Element progressCircle(Map props = [:], Object... children) { componentElement('ProgressCircle', props, children) }
     static Element radio(Map props = [:], Object... children) { componentElement('Radio', props, children) }
@@ -211,4 +286,98 @@ class Ui {
     static Element timeField(Map props = [:], Object... children) { componentElement('TimeField', props, children) }
     static Element toggleButton(Map props = [:], Object... children) { componentElement('ToggleButton', props, children) }
     static Element view(Map props = [:], Object... children) { componentElement('View', props, children) }
+
+    // ─── ui.table + formatters ─────────────────────────────────────────────────────────────
+
+    private static final String UI_TABLE_NAME = "deephaven.ui.elements.UITable"
+
+    /**
+     * Wrap a Deephaven Table for display with deephaven.ui-specific options.
+     *
+     * <pre>
+     * Ui.table(myTable,
+     *     onRowPress: { row -> println row },
+     *     format_: [Ui.tableFormat(cols: 'price', value: '0.00')],
+     *     showSearch: true)
+     * </pre>
+     *
+     * @param props options like {@code onRowPress}, {@code format_}, {@code quickFilters},
+     *              {@code aggregations}, {@code densityKey}, etc.
+     * @param tableArg the Deephaven Table (or a URI string / UriElement) to display.
+     */
+    static Element table(Map props, Object tableArg) {
+        Map merged = new LinkedHashMap()
+        if (props != null) {
+            merged.putAll(props)
+        }
+        merged.put('table', tableArg)
+        String key = (merged.remove('key') as String)
+        new BaseElement(UI_TABLE_NAME, null, key, merged)
+    }
+
+    /** {@code Ui.table(myTable)} — no extra options. */
+    static Element table(Object tableArg) {
+        table([:], tableArg)
+    }
+
+    /**
+     * Aggregation rule for a {@link #table}. Mirrors Python's {@code TableAgg} dataclass.
+     *
+     * @param props {@code cols} (column or list of columns to aggregate over) and/or
+     *              {@code ignoreCols} (mutually exclusive with {@code cols}).
+     * @param agg one of: AbsSum, Avg, Count, CountDistinct, Distinct, First, Last,
+     *            Max, Min, Std, Sum, Unique, Var.
+     */
+    static Map tableAgg(Map props, String agg) {
+        Map m = new LinkedHashMap()
+        m.put('agg', agg)
+        if (props != null) {
+            m.putAll(props)
+        }
+        return m
+    }
+
+    /** {@code Ui.tableAgg('Sum')} — no extra options. */
+    static Map tableAgg(String agg) {
+        tableAgg([:], agg)
+    }
+
+    /**
+     * Formatting rule for a {@link #table}. Mirrors Python's {@code TableFormat} dataclass.
+     * Keys: {@code cols}, {@code if_}, {@code color}, {@code backgroundColor}, {@code alignment},
+     * {@code value}, {@code mode} (a {@link #tableDatabar}).
+     */
+    static Map tableFormat(Map props = [:]) {
+        Map m = new LinkedHashMap()
+        if (props != null) {
+            m.putAll(props)
+        }
+        return m
+    }
+
+    /**
+     * Databar rendering mode for a column. Mirrors Python's {@code TableDatabar}. Auto-sets
+     * {@code type: 'dataBar'} so the JS plugin discriminates it from a heatmap.
+     */
+    static Map tableDatabar(Map props = [:]) {
+        Map m = new LinkedHashMap()
+        m.put('type', 'dataBar')
+        if (props != null) {
+            m.putAll(props)
+        }
+        return m
+    }
+
+    /**
+     * Heatmap configuration for a column color. Mirrors Python's {@code TableHeatmap}. Auto-sets
+     * {@code type: 'heatmap'} so the JS plugin discriminates it from a databar.
+     */
+    static Map tableHeatmap(Map props = [:]) {
+        Map m = new LinkedHashMap()
+        m.put('type', 'heatmap')
+        if (props != null) {
+            m.putAll(props)
+        }
+        return m
+    }
 }

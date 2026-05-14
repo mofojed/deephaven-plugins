@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flipkart.zjsonpatch.JsonDiff;
 import groovy.lang.Closure;
+import io.deephaven.engine.context.ExecutionContext;
 import io.deephaven.ui.element.Element;
 import io.deephaven.ui.element.RenderedNode;
 import io.deephaven.ui.event.EventContext;
@@ -14,6 +15,7 @@ import io.deephaven.ui.render.RenderContext;
 import io.deephaven.ui.render.Renderer;
 import io.deephaven.ui.render.RootRenderContext;
 import io.deephaven.ui.render.UiCallable;
+import io.deephaven.util.SafeCloseable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -68,6 +70,12 @@ public final class ElementMessageStream implements ClientConnection, RootRenderC
     private final RenderContext rootContext;
     private final Renderer renderer;
     private final EventContext eventContext;
+    /**
+     * Captured at construction (when the server calls into us with a proper context attached) and
+     * re-opened on the render thread so live-data hooks see a real UpdateGraph, not the poisoned
+     * default attached to executor threads. Mirrors Python's {@code self._exec_context}.
+     */
+    private final ExecutionContext capturedExecutionContext;
     private JsonNode lastDocument;
     private Map<String, List<String>> queryParams = new HashMap<>();
 
@@ -93,6 +101,13 @@ public final class ElementMessageStream implements ClientConnection, RootRenderC
         this.renderer = new Renderer(rootContext);
         this.eventContext = new EventContext(this::sendEvent);
         this.lastDocument = mapper.createObjectNode();
+        ExecutionContext captured;
+        try {
+            captured = ExecutionContext.getContext();
+        } catch (Throwable t) {
+            captured = null;
+        }
+        this.capturedExecutionContext = captured;
         registerDispatcherMethods();
     }
 
@@ -179,7 +194,10 @@ public final class ElementMessageStream implements ClientConnection, RootRenderC
     }
 
     private void processCallableQueue() {
-        try (AutoCloseable eventScope = eventContext.open()) {
+        try (SafeCloseable execScope = capturedExecutionContext == null
+                ? () -> {}
+                : capturedExecutionContext.open();
+             AutoCloseable eventScope = eventContext.open()) {
             synchronized (renderLock) {
                 renderThread = Thread.currentThread();
                 renderState.set(RenderState.RENDERING);

@@ -111,7 +111,11 @@ public final class Hooks {
                 depsRef.current = dependencies;
             }
         };
-        Runnable unmount = () -> {
+        // Stabilize the unmount listener across renders. RenderContext fires any unmount listener
+        // that was registered last render but is missing this render — if we constructed a fresh
+        // lambda each render they'd never match, and the effect would tear itself down on every
+        // render. Python achieves the same with use_callback(unmount, []).
+        Runnable unmount = useCallback((Runnable) () -> {
             mountedRef.current = false;
             if (cleanupRef.current != null) {
                 try {
@@ -120,7 +124,7 @@ public final class Hooks {
                     cleanupRef.current = null;
                 }
             }
-        };
+        }, List.of());
 
         RenderContext ctx = RenderContext.current();
         ctx.addEffect(cleanup, runEffect);

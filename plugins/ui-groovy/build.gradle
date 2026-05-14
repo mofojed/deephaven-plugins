@@ -24,6 +24,13 @@ ext {
 dependencies {
     compileOnly "io.deephaven:deephaven-plugin:${deephavenVersion}"
     compileOnly "io.deephaven:deephaven-engine-api:${deephavenVersion}"
+    // Used by live-data hooks for table snapshot iteration and listener registration.
+    compileOnly "io.deephaven:deephaven-engine-rowset:${deephavenVersion}"
+    // InstrumentedTableUpdateListenerAdapter (engine table impl). The server provides it at runtime.
+    compileOnly "io.deephaven:deephaven-engine-table:${deephavenVersion}"
+    // AwareFunctionalLock / SafeCloseable used when attaching the table listener.
+    compileOnly "io.deephaven:deephaven-engine-updategraph:${deephavenVersion}"
+    compileOnly "io.deephaven:deephaven-Util:${deephavenVersion}"
 
     implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
     implementation 'com.flipkart.zjsonpatch:zjsonpatch:0.4.16'

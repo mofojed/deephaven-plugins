@@ -4,18 +4,22 @@ JVM-native (Java + Groovy) backend for the `deephaven.ui` widget. Produces the
 same wire output as the existing Python plugin so the shipped JS plugin
 (`@deephaven/js-plugin-ui`) works against it unchanged.
 
-Covers ~70 of the Python plugin's ~85 components plus the raw HTML elements:
+Functional parity with the Python plugin's MVP surface:
 
-- Hooks: `useState`, `useEffect`, `useCallback`, `useMemo`, `useRef`, `useSendEvent`
+- Hooks: `useState`, `useEffect`, `useCallback`, `useMemo`, `useRef`, `useSendEvent`,
+  `useTableListener`, `useTableData`, `useRowData`, `useCellData`, `useColumnData`
 - Components: nearly all Spectrum components (button, flex, view, picker, combo_box,
-  date_picker, dialog, menu, tabs, slider, progress_bar, …)
+  date_picker, dialog, menu, tabs, slider, progress_bar, table, …)
 - `Ui.dashboard(element)` for multi-panel layouts
 - `Ui.toast(message, options)` for transient notifications
+- `Ui.itemTableSource(table, …)` consumable by picker / comboBox / listView
+- `Ui.tableAgg / tableFormat / tableDatabar / tableHeatmap` for table formatting
 - `Html.*` for raw HTML elements (`Html.div`, `Html.h1`, `Html.p`, …)
 
-Deferred to a follow-up: `ui.table`, `ui.item_table_source`, live-data hooks
-(`use_table_data`, `use_table_listener`, `use_row_data`, `use_cell_data`,
-`use_column_data`), and routing hooks.
+Deferred for a future round: routing hooks (`useQueryParam(s)`,
+`useSetQueryParam`), `useContext` / `ContextProviderElement`, and a few
+seldom-used helpers (`useExecutionContext`, `useLivenessScope`, `useRenderQueue`,
+`useBoolean`).
 
 ## Example
 
