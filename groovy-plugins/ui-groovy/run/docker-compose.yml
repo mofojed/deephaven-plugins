@@ -11,7 +11,9 @@
 services:
   deephaven:
     image: ghcr.io/deephaven/server-slim:edge
-    container_name: deephaven-ui-groovy
+    # No hardcoded container_name: this compose file is also `include`d from
+    # ../../docker-compose.yml; a fixed name collides across compose projects. Compose generates
+    # `<project>-deephaven-1` automatically (e.g. run-deephaven-1 or groovy-plugins-deephaven-1).
     ports:
       - "10000:10000"
     volumes:
