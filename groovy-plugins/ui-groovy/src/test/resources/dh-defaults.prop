@@ -1,0 +1,8 @@
+# Minimal dh-defaults.prop for unit tests. Deephaven's Configuration.getInstance() is invoked
+# during the static init of io.deephaven.engine.liveness.Liveness, which fires the first time
+# RenderContext.open() constructs a top-level LivenessScope. Production servers ship a full
+# dh-defaults.prop in deephaven-configs; this stub just satisfies the loader so our tests can
+# exercise RenderContext without a server image. The properties below are the few that
+# Configuration / Liveness consult during their bootstrap.
+measurement.per_thread_cpu=false
+allocation.stats.enabled=false

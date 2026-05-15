@@ -16,7 +16,7 @@ the other on a given server).
 
 ## Branch state
 
-Branch `ui-groovy`, 6 commits ahead of `main`, all green:
+Branch `ui-groovy`, 7+ commits ahead of `main`, all green:
 
 | Commit | Summary |
 |---|---|
@@ -26,8 +26,9 @@ Branch `ui-groovy`, 6 commits ahead of `main`, all green:
 | `f9856124` | `ui.table` + `item_table_source` + live-data hooks (97 tests) |
 | `a068213e` | Move `plugins/ui-groovy` → `groovy-plugins/ui-groovy` |
 | `5334964e` | Routing / context / util hooks (109 tests) |
+| _pending_ | Liveness scope plumbing + `useLivenessScope` (117 tests) |
 
-**109 Spock unit tests pass.** All 12 demos in `groovy-plugins/ui-groovy/run/app.d/`
+**117 Spock unit tests pass.** All 12 demos in `groovy-plugins/ui-groovy/run/app.d/`
 verified end-to-end in headless Chrome against a `ghcr.io/deephaven/server-slim:edge`
 container brought up via `run/docker-compose.yml`.
 
@@ -55,10 +56,22 @@ container brought up via `run/docker-compose.yml`.
 ### Hooks — `src/main/java/io/deephaven/ui/hook/`
 | Hook | File |
 |---|---|
-| `useState`, `useEffect`, `useCallback`, `useMemo`, `useRef`, `useSendEvent`, `useBoolean`, `useRenderQueue`, `useContext` | `Hooks.java` |
+| `useState`, `useEffect`, `useCallback`, `useMemo`, `useRef`, `useSendEvent`, `useBoolean`, `useRenderQueue`, `useContext`, `useLivenessScope` | `Hooks.java` |
 | `useTableListener`, `useTableData`, `useRowData`, `useCellData`, `useColumnData` | `LiveHooks.java` |
 | `useExecutionContext` | `ExecutionContextHooks.java` |
 | `useQueryParams`, `useQueryParam`, `useSetQueryParam` | `RoutingHooks.java` |
+
+### Liveness scope plumbing — `render/RenderContext.java` + `hook/Hooks.java`
+Mirrors Python's `_top_level_scope` / `_collected_scopes` lifecycle: each
+`open()` creates a fresh `LivenessScope`, pushes it on
+`LivenessScopeStack`, and snapshots the previous set. `manage(LivenessScope)`
+adds to the new set; `OpenScope.close()` releases the
+(old − new) difference after a successful render and merges old back in on
+failure (`markBodyFailed()` from the Renderer). `useMemo` runs its supplier
+inside a freshly opened scope and re-`manage`s the cached scope each render so
+derived live tables survive. `useLivenessScope` wraps a `Closure`/`Runnable`/
+`Consumer` so objects created during an out-of-render invocation are captured
+into a scope that transfers to the next dep-driven re-render.
 
 Supporting types: `Ref`, `StateTuple`, `BooleanSetter`, `BooleanState` — all
 `Iterable` so Groovy destructuring (`def (val, set) = ...`) works.
@@ -88,49 +101,38 @@ Supporting types: `Ref`, `StateTuple`, `BooleanSetter`, `BooleanState` — all
 ## What's remaining
 
 ### High value
-1. **`useLivenessScope`** — the only Python hook not yet ported. Needs
-   `LivenessScope` plumbing in `RenderContext` (Python tracks
-   `_collected_scopes`, `_top_level_scope`, exposes `manage(LivenessScope)` so
-   derived live tables survive across renders). Without it, a derived live
-   table created inside `useMemo`/`useCallback` may leak or be released
-   prematurely. The current live-data hooks work because users pass a stable
-   table reference; under sustained load with derived-table churn this could
-   misbehave.
-2. **Wire-format golden tests.** Capture `documentPatched` byte payloads from
+1. **Wire-format golden tests.** Capture `documentPatched` byte payloads from
    the Python plugin for a fixed scenario set, diff against Groovy output.
    Highest-value safety net for keeping the two backends interoperable as the
    JS plugin evolves.
-3. **Liveness scope semantics beyond the hook.** `RenderContext` should retain
-   `Table`s produced inside render functions across renders; Python collects
-   them and releases stale ones each cycle. Same concern as item 1.
 
 ### Medium value
-4. **`convert_date_props`.** Python helper that auto-converts `Date` /
+2. **`convert_date_props`.** Python helper that auto-converts `Date` /
    `Instant` / `LocalDate` props on `date_picker` / `date_field` / `calendar`.
    Components work without it but lose some prop-type acceptance.
-5. **Hot-reload of `app.d` scripts.** Currently requires
+3. **Hot-reload of `app.d` scripts.** Currently requires
    `docker compose restart` on every script edit. A console command or file
    watcher would tighten the dev loop.
-6. **Maven Central publish pipeline.** The Gradle module is standalone with
+4. **Maven Central publish pipeline.** The Gradle module is standalone with
    no CI yet. Decide coordinates (`io.deephaven:deephaven-plugin-ui-groovy:<ver>`),
    versioning relative to deephaven-core, and wire a publish task.
-7. **Coexistence-with-Python flag.** Today both plugins register the same
+5. **Coexistence-with-Python flag.** Today both plugins register the same
    ObjectType names, so installs are mutually exclusive. If users need both
    on one server, add the `deephaven.ui.groovy.enabled` system property gate
    originally proposed in the MVP plan.
-8. **Playwright integration with `tests/`.** The existing `tests/` harness only
+6. **Playwright integration with `tests/`.** The existing `tests/` harness only
    covers Python widgets. Add a `tests/ui_groovy.spec.ts` (or similar) that
    drives `groovy-plugins/ui-groovy/run/` so regressions land in CI.
 
 ### Low value / nice-to-have
-9. **Hook-count mismatch handling.** `RenderContext.OpenScope.close` swallows
+7. **Hook-count mismatch handling.** `RenderContext.OpenScope.close` swallows
    `RuntimeException` from effects/cleanups, masking the
    "Expected N hooks, got M" error. Let that one escape.
-10. **`useEffect` cleanup ordering edge cases.** Current port is correct for
-    the demos but should be stress-tested with multiple effects and
-    interleaved dep changes.
-11. **Documentation pass.** README is minimal; a Python → Groovy cheatsheet
-    plus a "common patterns" doc would help adoption.
+8. **`useEffect` cleanup ordering edge cases.** Current port is correct for
+   the demos but should be stress-tested with multiple effects and
+   interleaved dep changes.
+9. **Documentation pass.** README is minimal; a Python → Groovy cheatsheet
+   plus a "common patterns" doc would help adoption.
 
 ## Gotchas — bugs that took the longest to find
 

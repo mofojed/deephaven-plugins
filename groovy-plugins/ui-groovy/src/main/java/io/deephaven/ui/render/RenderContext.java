@@ -1,5 +1,9 @@
 package io.deephaven.ui.render;
 
+import io.deephaven.engine.liveness.LivenessScope;
+import io.deephaven.engine.liveness.LivenessScopeStack;
+import io.deephaven.util.SafeCloseable;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -9,11 +13,16 @@ import java.util.Set;
 
 /**
  * React-style per-component render state. Direct port of Python's {@code RenderContext}: hook
- * slots, child contexts, effects, unmount listeners. The current context is exposed via a
- * {@link ThreadLocal} so {@link io.deephaven.ui.hook.Hooks} can find it implicitly.
+ * slots, child contexts, effects, unmount listeners, plus liveness-scope plumbing for derived
+ * live objects produced inside the render. The current context is exposed via a {@link ThreadLocal}
+ * so {@link io.deephaven.ui.hook.Hooks} can find it implicitly.
  *
- * <p>Live-data liveness-scope plumbing from the Python version is intentionally omitted in this
- * MVP — see plan {@code Phase 2}.
+ * <p>Each render opens a fresh top-level {@link LivenessScope} which captures any
+ * {@code LivenessReferent}s allocated during render (e.g., derived tables built directly in the
+ * component body). Hooks that own their own scope ({@code useMemo}, {@code useLivenessScope})
+ * register it via {@link #manage(LivenessScope)} so the context retains it across renders. After
+ * a successful render, scopes that were owned by the previous render but are no longer in
+ * {@link #collectedScopes} are released — same lifecycle the Python plugin uses.
  */
 public final class RenderContext {
 
@@ -35,6 +44,11 @@ public final class RenderContext {
     private final List<String> collectedContexts = new ArrayList<>();
     private final List<Runnable> openCleanups = new ArrayList<>();
 
+    /** Scopes currently owned by this context (released when no longer referenced post-render). */
+    private Set<LivenessScope> collectedScopes = new HashSet<>();
+    /** Top-level scope opened while this context is active — captures objects created in render. */
+    private LivenessScope topLevelScope;
+
     public RenderContext(RootRenderContext root) {
         this.root = root;
     }
@@ -51,7 +65,7 @@ public final class RenderContext {
     /** Open this context for a render pass. Returns an {@link AutoCloseable} that closes it. */
     public OpenScope open() {
         assertMounted();
-        if (hookIndex != READY_TO_OPEN) {
+        if (hookIndex != READY_TO_OPEN || topLevelScope != null) {
             throw new IllegalStateException("RenderContext.open() was already called, and is not reentrant");
         }
         hookIndex = OPENED_AND_UNUSED;
@@ -67,19 +81,51 @@ public final class RenderContext {
 
         collectedEffects.clear();
 
-        return new OpenScope(previous, oldUnmountListeners, oldContextKeys);
+        // Snapshot the old collected scopes, then start a new set seeded with this render's
+        // top-level scope. Objects created directly in the render body register against
+        // {@code topLevelScope} via the LivenessScopeStack thread-local.
+        Set<LivenessScope> oldScopes = collectedScopes;
+        topLevelScope = new LivenessScope();
+        collectedScopes = new HashSet<>();
+        collectedScopes.add(topLevelScope);
+        SafeCloseable scopeHandle = LivenessScopeStack.open(topLevelScope, false);
+
+        return new OpenScope(previous, oldUnmountListeners, oldContextKeys, oldScopes, scopeHandle);
     }
 
     public final class OpenScope implements AutoCloseable {
         private final RenderContext previous;
         private final List<Runnable> oldUnmountListeners;
         private final List<String> oldContextKeys;
+        private final Set<LivenessScope> oldScopes;
+        private final SafeCloseable scopeHandle;
+        /**
+         * Tracks whether the caller marked this render body as failed. Default {@code true} so
+         * direct callers (tests) that just open/close get the success-path behavior. The Renderer
+         * flips this to {@code false} via {@link #markBodyFailed()} if the body throws, which
+         * causes us to retain the old scopes (matching Python's exception path) so any live
+         * objects in flight aren't prematurely released.
+         */
+        private boolean bodySucceeded = true;
         private boolean closed;
 
-        OpenScope(RenderContext previous, List<Runnable> oldUnmountListeners, List<String> oldContextKeys) {
+        OpenScope(RenderContext previous, List<Runnable> oldUnmountListeners, List<String> oldContextKeys,
+                  Set<LivenessScope> oldScopes, SafeCloseable scopeHandle) {
             this.previous = previous;
             this.oldUnmountListeners = oldUnmountListeners;
             this.oldContextKeys = oldContextKeys;
+            this.oldScopes = oldScopes;
+            this.scopeHandle = scopeHandle;
+        }
+
+        /**
+         * Mark that the render body raised before producing a result. Called by the Renderer so
+         * {@link #close()} keeps old liveness scopes around — they'll be reconciled on the next
+         * successful render. Without this, a transient render error would release live objects the
+         * surrounding system is still using.
+         */
+        public void markBodyFailed() {
+            bodySucceeded = false;
         }
 
         @Override
@@ -88,6 +134,13 @@ public final class RenderContext {
                 return;
             }
             closed = true;
+
+            // Pop our top-level scope off the LivenessScopeStack BEFORE running effects so nested
+            // engine calls in effects/cleanups don't accidentally register against it.
+            try {
+                scopeHandle.close();
+            } catch (RuntimeException ignored) {
+            }
 
             try {
                 // Run open-context cleanups in reverse registration order (matches Python). These
@@ -134,6 +187,24 @@ public final class RenderContext {
                     }
                 }
 
+                if (bodySucceeded) {
+                    // Release scopes that were owned last render but aren't part of this render's
+                    // set. Subtract first so a re-used scope's refcount goes 1→2→1 (preserved)
+                    // rather than 1→0→1 (released and immediately re-acquired).
+                    Set<LivenessScope> toRelease = new HashSet<>(oldScopes);
+                    toRelease.removeAll(collectedScopes);
+                    for (LivenessScope scope : toRelease) {
+                        try {
+                            scope.release();
+                        } catch (RuntimeException ignored) {
+                        }
+                    }
+                } else {
+                    // Body raised: don't release anything. Merge the old set back in so the next
+                    // successful render can reconcile.
+                    collectedScopes.addAll(oldScopes);
+                }
+
                 int seenHooks = hookIndex + 1;
                 if (hookCount < 0) {
                     hookCount = seenHooks;
@@ -147,6 +218,7 @@ public final class RenderContext {
                     CURRENT.remove();
                 }
                 hookIndex = READY_TO_OPEN;
+                topLevelScope = null;
                 collectedEffects.clear();
             }
         }
@@ -248,6 +320,32 @@ public final class RenderContext {
         openCleanups.add(cleanup);
     }
 
+    /**
+     * Declare that {@code scope} must live until the end of the next successful render of this
+     * context. Used by {@code useMemo} and {@code useLivenessScope} to transfer ownership of a
+     * derived-object liveness scope to the surrounding render. This context must be active.
+     */
+    public void manage(LivenessScope scope) {
+        assertActive();
+        if (scope != null) {
+            collectedScopes.add(scope);
+        }
+    }
+
+    /** @return the scope opened for this render; only non-null while a render is in progress. */
+    public LivenessScope topLevelScope() {
+        return topLevelScope;
+    }
+
+    /**
+     * Scopes currently retained by this context. The reference is stable across a render cycle:
+     * {@link #open()} replaces the underlying set so a caller holding a reference sees only the
+     * old render's set. Exposed primarily for testing and diagnostics.
+     */
+    public Set<LivenessScope> collectedScopes() {
+        return collectedScopes;
+    }
+
     public ExportedRenderState exportState() {
         Map<String, Object> out = new LinkedHashMap<>();
 
@@ -316,6 +414,14 @@ public final class RenderContext {
             } catch (RuntimeException ignored) {
             }
         }
+        // Release any scopes still owned so the underlying live objects can drop their refs.
+        for (LivenessScope scope : collectedScopes) {
+            try {
+                scope.release();
+            } catch (RuntimeException ignored) {
+            }
+        }
+        collectedScopes.clear();
         hookIndex = READY_TO_OPEN;
         hookCount = -1;
         state.clear();

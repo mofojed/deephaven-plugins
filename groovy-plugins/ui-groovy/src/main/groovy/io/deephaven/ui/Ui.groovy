@@ -31,9 +31,6 @@ import io.deephaven.ui.util.PropCase
  *
  * <p>Component prop names may be passed as either camelCase ({@code onPress}, idiomatic Groovy)
  * or snake_case ({@code on_press}, Python parity) — both produce identical wire output.
- *
- * <p>Not yet ported: {@code ui.table}, {@code ui.dashboard}, {@code ui.toast},
- * {@code ui.item_table_source}, and live-data hooks. See plan Phase 2.
  */
 class Ui {
 
@@ -76,6 +73,20 @@ class Ui {
             def result = effect.call()
             (result instanceof Runnable) ? (Runnable) result : null
         }, dependencies)
+    }
+
+    /**
+     * Wrap a closure so derived live objects it creates (e.g. {@code table.update(...)}) are
+     * retained by the next render of the surrounding component. Use for closures invoked OUTSIDE
+     * the render — typically event callbacks (button onPress, table tickers).
+     *
+     * <pre>
+     * def wrapped = Ui.useLivenessScope({ -> setDerived(base.update("...")) }, [base])
+     * Ui.button("Build", onPress: wrapped)
+     * </pre>
+     */
+    static <T> T useLivenessScope(T callable, List dependencies) {
+        Hooks.useLivenessScope(callable, dependencies)
     }
 
     /** Get a callable for emitting client-side events. {@code sendEvent.call(name, params)}. */

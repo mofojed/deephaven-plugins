@@ -27,11 +27,17 @@ public final class Renderer {
 
     private static RenderedNode renderElement(Element element, RenderContext context) {
         RenderContext.OpenScope scope = context.open();
+        boolean success = false;
         try {
             Map<String, Object> props = element.render(context);
             Map<String, Object> renderedProps = renderDictInOpenContext(props, context);
-            return new RenderedNode(element.getName(), renderedProps);
+            RenderedNode node = new RenderedNode(element.getName(), renderedProps);
+            success = true;
+            return node;
         } finally {
+            if (!success) {
+                scope.markBodyFailed();
+            }
             scope.close();
         }
     }
@@ -57,22 +63,33 @@ public final class Renderer {
 
     private static List<Object> renderList(List<Object> items, RenderContext context) {
         RenderContext.OpenScope scope = context.open();
+        boolean success = false;
         try {
             List<Object> out = new ArrayList<>(items.size());
             for (int i = 0; i < items.size(); i++) {
                 out.add(renderChildItem(items.get(i), context, String.valueOf(i)));
             }
+            success = true;
             return out;
         } finally {
+            if (!success) {
+                scope.markBodyFailed();
+            }
             scope.close();
         }
     }
 
     private static Map<String, Object> renderDict(Map<String, Object> dict, RenderContext context) {
         RenderContext.OpenScope scope = context.open();
+        boolean success = false;
         try {
-            return renderDictInOpenContext(dict, context);
+            Map<String, Object> result = renderDictInOpenContext(dict, context);
+            success = true;
+            return result;
         } finally {
+            if (!success) {
+                scope.markBodyFailed();
+            }
             scope.close();
         }
     }

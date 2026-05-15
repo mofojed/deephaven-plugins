@@ -1,10 +1,13 @@
 package io.deephaven.ui.hook;
 
 import groovy.lang.Closure;
+import io.deephaven.engine.liveness.LivenessScope;
+import io.deephaven.engine.liveness.LivenessScopeStack;
 import io.deephaven.ui.element.UiContext;
 import io.deephaven.ui.event.EventContext;
 import io.deephaven.ui.render.RenderContext;
 import io.deephaven.ui.render.UiCallable;
+import io.deephaven.util.SafeCloseable;
 
 import java.util.AbstractMap;
 import java.util.List;
@@ -64,6 +67,12 @@ public final class Hooks {
     /**
      * Memoize a value across renders. The supplier re-runs when {@code dependencies} differs from
      * the previous render's dependencies (by {@link Objects#equals}).
+     *
+     * <p>The supplier runs inside a fresh {@link LivenessScope}, and that scope is handed to the
+     * current {@link RenderContext} via {@code manage()} — so derived live objects (e.g., tables
+     * built inside {@code useMemo}) survive across renders until the value is recomputed or the
+     * component unmounts. On a cache hit the previously-created scope is re-managed for the same
+     * reason. Matches Python's {@code use_memo}.
      */
     @SuppressWarnings("unchecked")
     public static <T> T useMemo(Supplier<T> fn, List<?> dependencies) {
@@ -72,9 +81,20 @@ public final class Hooks {
         }
         Ref<Object> depsRef = useRef(UNSET);
         Ref<Object> valueRef = useRef(null);
+        Ref<LivenessScope> scopeRef = useRef(null);
         if (depsRef.current == UNSET || !Objects.equals(depsRef.current, dependencies)) {
-            valueRef.current = fn.get();
+            LivenessScope scope = new LivenessScope();
+            try (SafeCloseable ignored = LivenessScopeStack.open(scope, false)) {
+                valueRef.current = fn.get();
+            }
+            scopeRef.current = scope;
             depsRef.current = dependencies;
+        }
+        if (scopeRef.current != null) {
+            // Re-manage every render so the surrounding context owns the scope this cycle; without
+            // this the scope falls out of {@code collectedScopes} on the second render and gets
+            // released even though the value is still referenced.
+            RenderContext.current().manage(scopeRef.current);
         }
         return (T) valueRef.current;
     }
@@ -82,6 +102,76 @@ public final class Hooks {
     /** Memoize a callback. Identity is stable until {@code dependencies} change. */
     public static <T> T useCallback(T callback, List<?> dependencies) {
         return useMemo(() -> callback, dependencies);
+    }
+
+    /**
+     * Wrap {@code callable} so that, when invoked, any {@code LivenessReferent}s it produces are
+     * captured by a {@link LivenessScope}; that scope is then handed off to the next render so the
+     * derived objects survive long enough for the surrounding component to observe them.
+     *
+     * <p>Intended for callbacks invoked OUTSIDE a currently-rendering component (e.g., button press
+     * handlers, table-update listeners). Without this wrapper, a derived table created in such a
+     * callback would be released as soon as the callback returns — its only owner being the
+     * thread-local scope opened for the invocation.
+     *
+     * <p>Direct port of Python's {@code use_liveness_scope}.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> T useLivenessScope(T callable, List<?> dependencies) {
+        Ref<LivenessScope> scopeRef = useRef(null);
+        return useMemo(() -> {
+            // If the previous wrapper was invoked since we last ran, the captured scope is sitting
+            // in the ref. Hand it to the current render — manage() puts it in collectedScopes so
+            // it survives until the next render that doesn't re-manage it.
+            if (scopeRef.current != null) {
+                RenderContext.current().manage(scopeRef.current);
+                scopeRef.current = null;
+            }
+            return wrapCallableWithLivenessScope(callable, scopeRef);
+        }, dependencies);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static <T> T wrapCallableWithLivenessScope(T callable, Ref<LivenessScope> scopeRef) {
+        if (callable instanceof Closure) {
+            Closure original = (Closure) callable;
+            return (T) new Closure(original.getOwner(), original.getThisObject()) {
+                @Override
+                public Object call(Object... args) {
+                    if (scopeRef.current == null) {
+                        scopeRef.current = new LivenessScope();
+                    }
+                    try (SafeCloseable ignored = LivenessScopeStack.open(scopeRef.current, false)) {
+                        return original.call(args);
+                    }
+                }
+            };
+        }
+        if (callable instanceof Runnable) {
+            Runnable original = (Runnable) callable;
+            return (T) (Runnable) () -> {
+                if (scopeRef.current == null) {
+                    scopeRef.current = new LivenessScope();
+                }
+                try (SafeCloseable ignored = LivenessScopeStack.open(scopeRef.current, false)) {
+                    original.run();
+                }
+            };
+        }
+        if (callable instanceof Consumer) {
+            Consumer original = (Consumer) callable;
+            return (T) (Consumer) (arg) -> {
+                if (scopeRef.current == null) {
+                    scopeRef.current = new LivenessScope();
+                }
+                try (SafeCloseable ignored = LivenessScopeStack.open(scopeRef.current, false)) {
+                    original.accept(arg);
+                }
+            };
+        }
+        throw new IllegalArgumentException(
+                "useLivenessScope: unsupported callable type " + callable.getClass()
+                        + " — wrap a Closure, Runnable, or Consumer");
     }
 
     /**

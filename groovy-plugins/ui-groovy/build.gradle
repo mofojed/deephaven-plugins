@@ -46,6 +46,16 @@ dependencies {
     // Ui.groovy references engine-api/engine-context types; the test compiler needs them too.
     testImplementation "io.deephaven:deephaven-engine-api:${deephavenVersion}"
     testImplementation "io.deephaven:deephaven-engine-context:${deephavenVersion}"
+    // RenderContext/useMemo now reference LivenessScope (engine-updategraph).
+    testImplementation "io.deephaven:deephaven-engine-updategraph:${deephavenVersion}"
+    testImplementation "io.deephaven:deephaven-Util:${deephavenVersion}"
+    // LivenessScope's static initializer goes through io.deephaven.internal.log.LoggerFactory,
+    // which uses ServiceLoader to find a backend. Without an SPI impl on the test classpath the
+    // first new LivenessScope() throws ExceptionInInitializerError. log-to-slf4j provides one and
+    // slf4j-simple terminates the chain at System.err. Production deps don't need either — the
+    // Deephaven server image provides log-factory + a logback backend.
+    testRuntimeOnly "io.deephaven:deephaven-log-to-slf4j:${deephavenVersion}"
+    testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.13'
 }
 
 // Copy the JS bundle produced by the Python plugin's build into this JAR's resources.
