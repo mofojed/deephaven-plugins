@@ -101,10 +101,20 @@ Supporting types: `Ref`, `StateTuple`, `BooleanSetter`, `BooleanState` — all
 ## What's remaining
 
 ### High value
-1. **Wire-format golden tests.** Capture `documentPatched` byte payloads from
-   the Python plugin for a fixed scenario set, diff against Groovy output.
-   Highest-value safety net for keeping the two backends interoperable as the
-   JS plugin evolves.
+1. **Stabilize the cross-backend Playwright run.** Initial port runs the
+   existing `tests/*.spec.ts` against a Groovy-mode server (see
+   `groovy-plugins/ui-groovy/tests/`); current chromium pass rate is **40/60**
+   on `tests/ui.spec.ts`, **8/17** on `ui_dialog/loading/nested_dashboard/query_params`,
+   and **2/~38** on `ui_table.spec.ts`. The failures break down as: chart
+   tests expecting plotly traces (`flex_7`, `flex_8`, `flex_11-13`,
+   `flex_19-21`, mirror set in `grid_*`) — Groovy uses Deephaven Plot Builder
+   instead of `dx.line()` so the trace class isn't emitted; ui_boom error
+   text differs (`Exception` literal vs `RuntimeException`); screenshot
+   snapshots are Linux references compared against darwin run (Python tests
+   that don't use screenshots all pass). Next steps: regenerate Linux
+   snapshots from the Groovy container, replace the plot-builder calls with
+   a no-op shim that emits the `.trace` class for tests that need it,
+   normalize the error label.
 
 ### Medium value
 2. **`convert_date_props`.** Python helper that auto-converts `Date` /
@@ -177,12 +187,24 @@ areas:
     widget needs an explicit
     `ApplicationContext.get().setField("name", value, "description")` to show
     up in the file panel. Python's deephaven session has a hook that exposes
-    module globals automatically; Groovy doesn't.
+    module globals automatically; Groovy doesn't. **Sub-gotcha:** if you
+    write `widget = ...` AND `setField("widget", widget, ...)`, the widget
+    appears TWICE in the panel list (once from each path) and Playwright
+    `getByRole('button', { name: 'widget', exact: true })` blows up on a
+    strict-mode violation. Fix: prefix the assignment with `def` so it stays
+    a script-local, then `setField` is the only source.
 12. **`useEffect` deps comparison.** A fresh `ArrayList` is built each render;
     `Objects.equals(prevList, newList)` compares contents via
     `AbstractList.equals`, so reference inequality between list instances is
     fine. But if a dep is a derived `Table` whose `.equals` is identity-only,
     the effect re-runs every render — usually harmless but worth knowing.
+13. **Closures bound to props need to accept the JS event arg.** Spectrum
+    callbacks like `onPress`, `onChange`, `onSelectionChange` are invoked
+    with a single event argument from the client. `{ -> doStuff() }` is a
+    Groovy zero-arity closure and silently fails to match. Use either
+    implicit `it` (`{ doStuff() }`) or an explicit placeholder
+    (`{ _e -> doStuff() }`). The failure mode is sneaky: no exception, but
+    the handler doesn't run and state stays stale.
 
 ## Key files
 

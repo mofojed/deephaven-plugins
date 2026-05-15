@@ -1,0 +1,74 @@
+# End-to-end test harness for the ui-groovy plugin. Mirrors the layout of tests/docker-compose.yml
+# from the Python plugins side: one service runs a Deephaven server with the plugin installed,
+# another runs the existing Playwright suite against it. The Playwright spec files in
+# {repo_root}/tests/ are the SAME files that exercise the Python plugin — wire-compat parity is
+# exactly what we want them to enforce.
+#
+# Prerequisites:
+#   - groovy-plugins/ui-groovy/build/libs/*.jar  (run ./gradlew build first)
+#   - JS bundle baked into the main JAR via copyJsBundle (gradle handles this)
+#   - {repo_root}/tests/  contains playwright-docker.config.ts and *.spec.ts
+#
+# Usage from groovy-plugins/ui-groovy/tests/:
+#   docker compose up deephaven-ui-groovy       # bring server up alone, for ad-hoc poking
+#   docker compose run --rm e2e-tests           # run the playwright suite once
+#   docker compose run --rm update-snapshots    # regenerate snapshots (writes back to tests/)
+
+services:
+  deephaven-ui-groovy:
+    container_name: deephaven-ui-groovy-tests
+    build:
+      # The Dockerfile sits next to this compose file and pulls jars from ../build/libs;
+      # context is groovy-plugins/ui-groovy so the COPY can find them.
+      context: ..
+      dockerfile: ./tests/Dockerfile
+      pull: true
+    expose:
+      - 10000
+    ports:
+      - "10000:10000"
+    volumes:
+      - ./app.d:/app.d:ro
+    environment:
+      - START_OPTS=-Xmx4g -DAuthHandlers=io.deephaven.auth.AnonymousAuthenticationHandler -Ddeephaven.console.type=groovy -Ddeephaven.application.dir=/app.d
+    networks:
+      default:
+        # The Python plugin's tests/playwright-docker.config.ts pins baseURL to
+        # http://deephaven-plugins:10000/ide/. Alias this server under that name so the existing
+        # spec.ts files run unchanged against our backend.
+        aliases:
+          - deephaven-plugins
+    healthcheck:
+      # The IDE static asset is the last thing to come up; use it as readiness signal.
+      test: ["CMD-SHELL", "curl -fs http://localhost:10000/ide/ > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  e2e-tests:
+    # Reuse the playwright runner image built by the root tests/Dockerfile so we don't duplicate
+    # the node + playwright install. The container's working dir is /work and it expects
+    # /work/tests, /work/playwright-docker.config.ts to be mounted.
+    build:
+      context: ../../..
+      dockerfile: ./tests/Dockerfile
+      pull: true
+    ipc: host
+    ports:
+      - "9323:9323"
+    volumes:
+      - ../../../tests:/work/tests
+      - ../../../test-results-groovy:/work/test-results
+      - ../../../playwright-report-groovy:/work/playwright-report
+    entrypoint: 'npx playwright test --config=playwright-docker.config.ts'
+    depends_on:
+      deephaven-ui-groovy:
+        condition: service_healthy
+
+  update-snapshots:
+    extends:
+      service: e2e-tests
+    entrypoint: 'npx playwright test --config=playwright-docker.config.ts --update-snapshots'
+    depends_on:
+      deephaven-ui-groovy:
+        condition: service_healthy

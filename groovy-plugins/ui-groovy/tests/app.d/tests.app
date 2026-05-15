@@ -1,0 +1,15 @@
+type=script
+scriptType=groovy
+enabled=true
+id=ui.groovy.tests
+name=UI Groovy Tests
+file_0=ui.groovy
+file_1=ui_render_all.groovy
+file_2=ui_flex.groovy
+file_3=ui_grid.groovy
+file_4=ui_table.groovy
+file_5=ui_panel_loading.groovy
+file_6=ui_dialog.groovy
+file_7=ui_markdown_code.groovy
+file_8=ui_nested_dashboard.groovy
+file_9=ui_query_params.groovy
