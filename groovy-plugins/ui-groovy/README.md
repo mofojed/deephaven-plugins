@@ -4,13 +4,17 @@ JVM-native (Java + Groovy) backend for the `deephaven.ui` widget. Produces the
 same wire output as the existing Python plugin so the shipped JS plugin
 (`@deephaven/js-plugin-ui`) works against it unchanged.
 
+Build / test commands and overall layout live in the parent
+[`groovy-plugins/`](../README.md) directory; this README covers what's
+specific to this plugin.
+
 Functional parity with the Python plugin's full hook + component surface:
 
 - Hooks: `useState`, `useEffect`, `useCallback`, `useMemo`, `useRef`, `useSendEvent`,
   `useTableListener`, `useTableData`, `useRowData`, `useCellData`, `useColumnData`,
   `useBoolean`, `useRenderQueue`, `useExecutionContext`, `useQueryParams`,
-  `useQueryParam`, `useSetQueryParam`, `useContext`
-- Context: `Ui.createContext(default)` returns a {@link UiContext}; provide a value
+  `useQueryParam`, `useSetQueryParam`, `useContext`, `useLivenessScope`
+- Context: `Ui.createContext(default)` returns a `UiContext`; provide a value
   with `ctx.provider(value, children...)`; read with `Ui.useContext(ctx)`
 - Components: nearly all Spectrum components (button, flex, view, picker, combo_box,
   date_picker, dialog, menu, tabs, slider, progress_bar, table, …)
@@ -19,9 +23,6 @@ Functional parity with the Python plugin's full hook + component surface:
 - `Ui.itemTableSource(table, …)` consumable by picker / comboBox / listView
 - `Ui.tableAgg / tableFormat / tableDatabar / tableHeatmap` for table formatting
 - `Html.*` for raw HTML elements (`Html.div`, `Html.h1`, `Html.p`, …)
-
-Still deferred (rarely-used): `useLivenessScope` — needs a full port of the Python
-liveness scope plumbing inside RenderContext.
 
 ## Example
 
@@ -39,8 +40,9 @@ myApp = Ui.component { ->
 
 ## Install
 
-Drop the produced JAR onto the Deephaven server's classpath (typically
-`${DEEPHAVEN_HOME}/server/lib/`). `META-INF/services/io.deephaven.plugin.Registration`
+Drop the produced JAR (and `zjsonpatch-*.jar` from the same `build/libs/` dir)
+onto the Deephaven server's classpath (typically `/apps/libs/` on
+`server-slim`). `META-INF/services/io.deephaven.plugin.Registration`
 auto-discovers the plugin.
 
 **Important: do not install both this plugin and the Python `deephaven-plugin-ui`
@@ -48,31 +50,34 @@ on the same server.** Both register the same Deephaven `ObjectType` names
 (`deephaven.ui.Element`, `deephaven.ui.Dashboard`); having both on one server
 will fail at registration. Install exactly one.
 
-## Build / test
+## Local dev — `run/`
+
+A docker-compose harness ships in `run/` for hand-testing widgets. From the
+parent `groovy-plugins/` directory:
 
 ```
-./gradlew test     # run the Spock unit tests (framework only, no server needed)
-./gradlew build    # full build, produces build/libs/deephaven-plugin-ui-groovy-<version>.jar
+./gradlew :ui-groovy:build    # if you haven't already
+cd ui-groovy/run
+docker compose up             # starts server on http://localhost:10000
 ```
 
-## Run end-to-end in a local Deephaven server
-
-A docker-compose harness ships in `run/`. From this directory:
-
-```
-./gradlew build           # if you haven't already
-cd run
-docker compose up         # starts server on http://localhost:10000
-```
-
-Then open <http://localhost:10000>. In the file panel on the left you'll see a
-variable `counter` from `app.d/counter.groovy` — double-click to render the
-widget, click "Increment", and watch the count update via the round-trip we
-just built. Edit `app.d/counter.groovy` to try other components.
+Then open <http://localhost:10000>. In the file panel on the left you'll see
+the demo widgets defined in `app.d/*.groovy` — double-click any of them to
+render. Edit the `.groovy` files and restart the container to try changes.
 
 `docker compose down` to stop.
 
-The JS bundle is copied from `../../plugins/ui/src/deephaven/ui/_js/dist` into
-the JAR's resources. If the Python plugin hasn't been built yet, that directory
-may not exist; the copy task is tolerant and you can pass `-PjsBundleSource=<dir>`
-to override the location.
+## End-to-end tests — `tests/`
+
+A separate docker-compose harness in `tests/` runs the repo's existing
+Playwright suite (`tests/*.spec.ts`) against a Groovy-mode server. See
+`tests/docker-compose.yml` for details. The fixtures under `tests/app.d/` are
+Groovy ports of the Python test scripts in the repo-level `tests/app.d/`.
+
+## JS bundle
+
+The JS plugin (`@deephaven/js-plugin-ui`) is reused unchanged from the Python
+plugin's build output. It's copied from `../../plugins/ui/src/deephaven/ui/_js/dist`
+into this JAR's resources at build time. If that directory doesn't exist (because
+the Python plugin hasn't been built yet), pass
+`-PjsBundleSource=<dir>` to override the source.

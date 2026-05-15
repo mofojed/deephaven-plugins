@@ -1,0 +1,50 @@
+// Shared build configuration for all JVM-backed Deephaven plugin modules in this directory.
+// Anything cross-cutting (java toolchain, deephaven version pin, repo list, common test deps)
+// lives here so subprojects stay focused on what's specific to them. A new plugin module just
+// needs its own build.gradle declaring deps and tasks — the boilerplate is inherited.
+
+ext {
+    deephavenVersion = project.findProperty('deephavenVersion') ?: '0.39.6'
+    jacksonVersion = '2.17.2'
+    groovyVersion = '4.0.22'
+}
+
+subprojects {
+    apply plugin: 'groovy'
+    apply plugin: 'java-library'
+
+    group = 'io.deephaven'
+    version = '0.1.0-SNAPSHOT'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        // Groovy is a runtime dependency for every plugin (the server image bundles it, so this
+        // is implementation-scoped, not bundled-runtime).
+        implementation "org.apache.groovy:groovy:${rootProject.ext.groovyVersion}"
+
+        testImplementation "org.apache.groovy:groovy:${rootProject.ext.groovyVersion}"
+        testImplementation 'org.spockframework:spock-core:2.3-groovy-4.0'
+        testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+        // Plugins that touch the engine (Tables, LivenessScope, etc.) in tests need a logger
+        // backend on the classpath, otherwise io.deephaven.engine.liveness.Liveness fails its
+        // static initializer when the test tries to construct a LivenessScope. log-to-slf4j
+        // provides the SPI and slf4j-simple terminates the chain at System.err.
+        testRuntimeOnly "io.deephaven:deephaven-log-to-slf4j:${rootProject.ext.deephavenVersion}"
+        testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.13'
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+}

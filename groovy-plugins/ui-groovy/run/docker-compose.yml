@@ -1,9 +1,9 @@
 # Local dev harness: a Groovy-flavored Deephaven server with the ui-groovy plugin JAR mounted.
 #
-# Usage:
-#   1. cd plugins/ui-groovy && ./gradlew build      # produces build/libs/*.jar
-#   2. cd run && docker compose up                  # starts server on http://localhost:10000
-#   3. Open http://localhost:10000  (auth: anonymous)
+# Usage (from the repo root):
+#   1. cd groovy-plugins && ./gradlew :ui-groovy:build  # produces ui-groovy/build/libs/*.jar
+#   2. cd ui-groovy/run && docker compose up            # starts server on http://localhost:10000
+#   3. Open http://localhost:10000                      # auth: anonymous
 #
 # Server-slim ships with -Ddeephaven.console.type=groovy by default and adds /apps/libs/* to
 # the JVM classpath. The plugin JAR + bundled JS land there; ServiceLoader does the rest.

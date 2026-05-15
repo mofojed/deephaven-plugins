@@ -1,24 +1,11 @@
-plugins {
-    id 'groovy'
-    id 'java-library'
-}
+// deephaven-plugin-ui-groovy — JVM-native backend for the deephaven.ui widget. Shared gradle
+// config (java toolchain, groovy version, common test deps, log backend) is in the parent
+// build.gradle; this file declares only what's specific to this plugin.
 
-group = 'io.deephaven'
-version = '0.1.0-SNAPSHOT'
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
-}
-
-repositories {
-    mavenCentral()
-}
-
-ext {
-    deephavenVersion = project.findProperty('deephavenVersion') ?: '0.39.6'
-    jacksonVersion = '2.17.2'
+// Preserve the artifact base name that downstream consumers already reference; the directory
+// (and gradle project) is just :ui-groovy.
+base {
+    archivesName = 'deephaven-plugin-ui-groovy'
 }
 
 dependencies {
@@ -34,33 +21,22 @@ dependencies {
 
     implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
     implementation 'com.flipkart.zjsonpatch:zjsonpatch:0.4.16'
-    implementation 'org.apache.groovy:groovy:4.0.22'
 
-    testImplementation 'org.apache.groovy:groovy:4.0.22'
-    testImplementation 'org.spockframework:spock-core:2.3-groovy-4.0'
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     // Tests that instantiate ObjectType subclasses (DashboardType/ElementType) need the SPI on
     // the test classpath; compileOnly above only puts it on the main classpath.
     testImplementation "io.deephaven:deephaven-plugin:${deephavenVersion}"
     // Ui.groovy references engine-api/engine-context types; the test compiler needs them too.
     testImplementation "io.deephaven:deephaven-engine-api:${deephavenVersion}"
     testImplementation "io.deephaven:deephaven-engine-context:${deephavenVersion}"
-    // RenderContext/useMemo now reference LivenessScope (engine-updategraph).
+    // RenderContext/useMemo reference LivenessScope (engine-updategraph).
     testImplementation "io.deephaven:deephaven-engine-updategraph:${deephavenVersion}"
     testImplementation "io.deephaven:deephaven-Util:${deephavenVersion}"
-    // LivenessScope's static initializer goes through io.deephaven.internal.log.LoggerFactory,
-    // which uses ServiceLoader to find a backend. Without an SPI impl on the test classpath the
-    // first new LivenessScope() throws ExceptionInInitializerError. log-to-slf4j provides one and
-    // slf4j-simple terminates the chain at System.err. Production deps don't need either — the
-    // Deephaven server image provides log-factory + a logback backend.
-    testRuntimeOnly "io.deephaven:deephaven-log-to-slf4j:${deephavenVersion}"
-    testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.13'
 }
 
-// Copy the JS bundle produced by the Python plugin's build into this JAR's resources.
+// Copy the JS bundle produced by the Python plugin's build into this JAR's resources. Path is
+// relative to the gradle root (groovy-plugins/), so the repo's plugins/ui/ dir is one level up.
 def jsBundleSource = project.findProperty('jsBundleSource')
-        ?: rootProject.file('../../plugins/ui/src/deephaven/ui/_js/dist')
+        ?: rootProject.file('../plugins/ui/src/deephaven/ui/_js/dist')
 
 tasks.register('copyJsBundle', Copy) {
     description = 'Copy the @deephaven/js-plugin-ui bundle into the JAR resources.'
@@ -71,10 +47,6 @@ tasks.register('copyJsBundle', Copy) {
 }
 
 processResources.dependsOn(tasks.named('copyJsBundle'))
-
-test {
-    useJUnitPlatform()
-}
 
 // The Deephaven server-slim image puts /apps/libs/* on the JVM classpath. It already provides
 // Jackson and Groovy at runtime, but NOT zjsonpatch (or anything else we add). Copy the

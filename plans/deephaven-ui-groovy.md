@@ -84,8 +84,14 @@ Supporting types: `Ref`, `StateTuple`, `BooleanSetter`, `BooleanState` — all
 - `Html.groovy` — 34 raw HTML tags (`Html.div`, `Html.h1`, …)
 
 ### Build & run
-- Gradle 8.14.3 wrapper at `groovy-plugins/ui-groovy/gradlew`. Standalone,
-  not yet integrated with any repo-root build.
+- Multi-project Gradle build rooted at `groovy-plugins/`, wrapper at
+  `groovy-plugins/gradlew`. Shared subproject config (java 17 toolchain,
+  Groovy 4.0.22, deephavenVersion pin, Spock / JUnit, log backend on test
+  classpath) lives in `groovy-plugins/build.gradle`. The `ui-groovy/`
+  subproject's `build.gradle` only declares plugin-specific deps and tasks
+  (JS bundle copy, zjsonpatch bundling). Designed so a new JVM plugin slots
+  in as `groovy-plugins/<name>/build.gradle` + an `include` line in
+  `settings.gradle`.
 - `compileOnly` deps on deephaven-plugin and deephaven-engine modules at
   0.39.6; server provides these at runtime.
 - `bundledRuntime` configuration copies `zjsonpatch-0.4.16.jar` into
@@ -208,6 +214,7 @@ areas:
 
 ## Key files
 
+- **Gradle root (multi-project):** `groovy-plugins/`
 - **Module root:** `groovy-plugins/ui-groovy/`
 - **Render loop:** `src/main/java/io/deephaven/ui/objecttype/ElementMessageStream.java`
 - **State plumbing:** `src/main/java/io/deephaven/ui/render/RenderContext.java`
@@ -222,10 +229,10 @@ areas:
 ## How to bring it up
 
 ```bash
-cd groovy-plugins/ui-groovy
-./gradlew test               # 109 Spock specs
-./gradlew build              # produces build/libs/{main,zjsonpatch}.jar
-cd run && docker compose up  # http://localhost:10000, anonymous auth
+cd groovy-plugins
+./gradlew :ui-groovy:test                # 117 Spock specs
+./gradlew :ui-groovy:build               # produces ui-groovy/build/libs/{main,zjsonpatch}.jar
+cd ui-groovy/run && docker compose up    # http://localhost:10000, anonymous auth
 ```
 
 Then open the IDE and double-click any of the registered widgets: `counter`,

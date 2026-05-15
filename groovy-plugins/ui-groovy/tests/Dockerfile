@@ -6,8 +6,8 @@
 # is extracted at server startup by UiJsPlugin.
 #
 # Build prerequisites — run BEFORE `docker compose build` from the repo root:
-#   1. npm ci && npm run build          (produces plugins/ui/src/deephaven/ui/_js/dist/index.js)
-#   2. cd groovy-plugins/ui-groovy && ./gradlew build   (produces build/libs/*.jar)
+#   1. npm ci && npm run build         (produces plugins/ui/src/deephaven/ui/_js/dist/index.js)
+#   2. cd groovy-plugins && ./gradlew :ui-groovy:build  (produces ui-groovy/build/libs/*.jar)
 
 FROM ghcr.io/deephaven/server-slim:edge
 

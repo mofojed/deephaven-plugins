@@ -1,0 +1,11 @@
+// Multi-project root for the JVM-backed Deephaven plugins. Each subdirectory under here is one
+// plugin module that produces its own JAR. The root supplies the gradle wrapper, java toolchain
+// pinning, and any cross-cutting test infrastructure; subprojects only need to declare what's
+// specific to them (their own deps, the JS bundle they ship, etc.).
+
+rootProject.name = 'deephaven-groovy-plugins'
+
+include 'ui-groovy'
+// `:ui-groovy:build` keeps the directory-aligned task path; the JAR archive base name is set
+// to deephaven-plugin-ui-groovy in the subproject build.gradle so the published artifact name
+// stays stable.
