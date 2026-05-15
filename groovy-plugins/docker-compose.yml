@@ -1,0 +1,17 @@
+# Default dev-server harness when you run `docker compose up` from `groovy-plugins/`.
+#
+# This file exists primarily as a directory anchor: without it, Compose v2 walks up the directory
+# tree looking for a compose file and lands on the repo-root `docker-compose.yml`, which builds
+# the Python plugin image. With this file present, running `docker compose up` from here brings
+# up the same Groovy dev server that `ui-groovy/run/docker-compose.yml` defines.
+#
+# Usage (from this directory):
+#   ./gradlew :ui-groovy:build    # produces ui-groovy/build/libs/*.jar
+#   docker compose up             # http://localhost:10000 — anonymous auth, console.type=groovy
+#
+# Per-plugin compose files still live under each module:
+#   - ui-groovy/run/     — same server as below, with demo widgets (`counter`, `showcase`, …)
+#   - ui-groovy/tests/   — Playwright e2e harness against this server
+
+include:
+  - path: ui-groovy/run/docker-compose.yml

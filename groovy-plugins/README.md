@@ -33,6 +33,18 @@ From this directory:
 ./gradlew build               # build everything
 ```
 
+## Run a dev server
+
+```
+./gradlew :ui-groovy:build    # produce the jars
+docker compose up             # Deephaven server on http://localhost:10000
+```
+
+The `docker-compose.yml` in this directory `include`s
+`ui-groovy/run/docker-compose.yml` and exists primarily to keep Compose v2 from
+walking up the directory tree and using the repo-root `docker-compose.yml` —
+that one builds the Python plugins image.
+
 Each module's output JARs land under `<module>/build/libs/`. The
 `bundledRuntime` configuration (when a module uses one — `ui-groovy` does)
 also copies any non-server-provided runtime deps next to the main JAR.
