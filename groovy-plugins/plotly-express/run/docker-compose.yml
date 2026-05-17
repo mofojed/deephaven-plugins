@@ -1,0 +1,20 @@
+# Solo dev harness for the plotly-express Groovy plugin. Use this when you want a Deephaven
+# server with only this plugin loaded (e.g. while iterating on figure shape) — the test app.d
+# is mounted so the named fixtures are immediately available.
+#
+# Usage (from the repo root):
+#   1. cd groovy-plugins && ./gradlew :plotly-express:build
+#   2. cd plotly-express/run && docker compose up
+#   3. Open http://localhost:10000/iframe/widget/?name=scatter_fig (or any other fixture name)
+#      for a fast iteration loop — no Panels-menu dance required.
+
+services:
+  deephaven:
+    image: ghcr.io/deephaven/server-slim:edge
+    ports:
+      - "10000:10000"
+    volumes:
+      - ../build/libs:/apps/libs:ro
+      - ../tests/app.d:/app.d:ro
+    environment:
+      - START_OPTS=-Xmx2g -DAuthHandlers=io.deephaven.auth.AnonymousAuthenticationHandler -Ddeephaven.console.type=groovy -Ddeephaven.application.dir=/app.d

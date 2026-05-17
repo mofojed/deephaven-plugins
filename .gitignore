@@ -37,9 +37,14 @@ releases/
 
 # Playwright
 test-results/
+test-results-*/
 playwright-report/
+playwright-report-*/
 blob-report/
 playwright/.cache/
+
+# Local agent state (Claude Code)
+.claude/
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*

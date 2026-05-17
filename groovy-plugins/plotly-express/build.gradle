@@ -1,0 +1,33 @@
+// deephaven-plugin-plotly-express — JVM-native backend for the deephaven.plot.express plugin.
+// Shared gradle config (java toolchain, groovy version, common test deps, log backend) is in
+// the parent build.gradle; this file declares only what's specific to this plugin.
+
+base {
+    archivesName = 'deephaven-plugin-plotly-express'
+}
+
+dependencies {
+    compileOnly "io.deephaven:deephaven-plugin:${deephavenVersion}"
+    compileOnly "io.deephaven:deephaven-engine-api:${deephavenVersion}"
+    compileOnly "io.deephaven:deephaven-Util:${deephavenVersion}"
+
+    implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+
+    testImplementation "io.deephaven:deephaven-plugin:${deephavenVersion}"
+    testImplementation "io.deephaven:deephaven-engine-api:${deephavenVersion}"
+    testImplementation "io.deephaven:deephaven-Util:${deephavenVersion}"
+}
+
+// Copy the JS bundle from the Python plugin's build output into this JAR's resources. The web
+// client reads it from /js-plugins/@deephaven/js-plugin-plotly-express/...
+def jsBundleSource = project.findProperty('jsBundleSource')
+        ?: rootProject.file('../plugins/plotly-express/src/deephaven/plot/express/_js/dist')
+
+tasks.register('copyJsBundle', Copy) {
+    description = 'Copy the @deephaven/js-plugin-plotly-express bundle into the JAR resources.'
+    from jsBundleSource
+    into layout.buildDirectory.dir('resources/main/io/deephaven/plot/express/js/dist')
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+processResources.dependsOn(tasks.named('copyJsBundle'))

@@ -1,0 +1,68 @@
+# End-to-end test harness for the plotly-express Groovy plugin. Same shape as
+# groovy-plugins/ui-groovy/tests/docker-compose.yml — the existing tests/express.spec.ts in the
+# repo root exercises Python-side snapshots; alias this server to "deephaven-plugins" so the
+# spec file runs unchanged against our Groovy backend (wire-format parity is exactly what we
+# want it to enforce).
+#
+# Prerequisites:
+#   - groovy-plugins/plotly-express/build/libs/*.jar  (run ./gradlew build first)
+#   - JS bundle baked into the main JAR via copyJsBundle (gradle handles this)
+#   - {repo_root}/tests/  contains playwright-docker.config.ts and express.spec.ts
+#
+# Usage from groovy-plugins/plotly-express/tests/:
+#   docker compose up deephaven-plotly-express      # bring server up alone, for ad-hoc poking
+#   docker compose run --rm e2e-tests               # run the playwright suite once
+#   docker compose run --rm update-snapshots        # regenerate snapshots (writes back to tests/)
+
+services:
+  deephaven-plotly-express:
+    container_name: deephaven-plotly-express-tests
+    build:
+      context: ..
+      dockerfile: ./tests/Dockerfile
+      pull: true
+    expose:
+      - 10000
+    ports:
+      - "10000:10000"
+    volumes:
+      - ./app.d:/app.d:ro
+    environment:
+      - START_OPTS=-Xmx4g -DAuthHandlers=io.deephaven.auth.AnonymousAuthenticationHandler -Ddeephaven.console.type=groovy -Ddeephaven.application.dir=/app.d
+    networks:
+      default:
+        # tests/playwright-docker.config.ts pins baseURL to http://deephaven-plugins:10000/ide/.
+        aliases:
+          - deephaven-plugins
+    healthcheck:
+      # server-slim doesn't ship curl/wget/netcat. Use bash's /dev/tcp pseudo-device to probe
+      # the listening port — that's enough to tell Compose the server is up.
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/10000' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  e2e-tests:
+    build:
+      context: ../../..
+      dockerfile: ./tests/Dockerfile
+      pull: true
+    ipc: host
+    ports:
+      - "9323:9323"
+    volumes:
+      - ../../../tests:/work/tests
+      - ../../../test-results-plotly-express:/work/test-results
+      - ../../../playwright-report-plotly-express:/work/playwright-report
+    entrypoint: 'npx playwright test --config=playwright-docker.config.ts'
+    depends_on:
+      deephaven-plotly-express:
+        condition: service_healthy
+
+  update-snapshots:
+    extends:
+      service: e2e-tests
+    entrypoint: 'npx playwright test --config=playwright-docker.config.ts --update-snapshots'
+    depends_on:
+      deephaven-plotly-express:
+        condition: service_healthy

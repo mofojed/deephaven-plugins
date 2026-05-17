@@ -48,3 +48,23 @@ subprojects {
         useJUnitPlatform()
     }
 }
+
+// Aggregate plugin JARs into groovy-plugins/build/libs so a single bind-mount in the root
+// docker-compose.yml can put both plugins on the server's /apps/libs classpath. Without this,
+// each subproject's `build/libs` would need its own mount, and overlapping mounts to the same
+// container path don't merge — the last write wins.
+tasks.register('assembleAll', Copy) {
+    description = 'Copy every subproject\'s plugin JAR into groovy-plugins/build/libs so the root docker-compose can mount one directory.'
+    group = 'build'
+
+    dependsOn subprojects.collect { it.tasks.named('assemble') }
+
+    subprojects.each { sp ->
+        from(sp.layout.buildDirectory.dir('libs')) {
+            include '*.jar'
+        }
+    }
+    into layout.buildDirectory.dir('libs')
+
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}

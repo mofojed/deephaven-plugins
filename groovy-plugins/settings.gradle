@@ -9,3 +9,8 @@ include 'ui-groovy'
 // `:ui-groovy:build` keeps the directory-aligned task path; the JAR archive base name is set
 // to deephaven-plugin-ui-groovy in the subproject build.gradle so the published artifact name
 // stays stable.
+
+include 'plotly-express'
+// Groovy port of the deephaven.plot.express (plotly-express) plugin. Folder drops the `-groovy`
+// suffix since the parent directory already conveys the language; archive base name is set to
+// deephaven-plugin-plotly-express in the subproject build.gradle.

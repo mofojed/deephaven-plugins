@@ -1,17 +1,29 @@
-# Default dev-server harness when you run `docker compose up` from `groovy-plugins/`.
-#
-# This file exists primarily as a directory anchor: without it, Compose v2 walks up the directory
-# tree looking for a compose file and lands on the repo-root `docker-compose.yml`, which builds
-# the Python plugin image. With this file present, running `docker compose up` from here brings
-# up the same Groovy dev server that `ui-groovy/run/docker-compose.yml` defines.
+# Default dev-server harness when you run `docker compose up` from `groovy-plugins/`. Loads
+# BOTH the ui-groovy and plotly-express plugins so you can exercise widgets and charts from a
+# single server.
 #
 # Usage (from this directory):
-#   ./gradlew :ui-groovy:build    # produces ui-groovy/build/libs/*.jar
-#   docker compose up             # http://localhost:10000 — anonymous auth, console.type=groovy
+#   ./gradlew assembleAll                                     # aggregate all plugin JARs into build/libs
+#   docker compose up                                         # http://localhost:10000
+#   # Fast-iteration loop: hit a widget directly without the Panels dance, e.g.
+#   #   http://localhost:10000/iframe/widget/?name=scatter_fig
+#   #   http://localhost:10000/iframe/widget/?name=ui_component
 #
 # Per-plugin compose files still live under each module:
-#   - ui-groovy/run/     — same server as below, with demo widgets (`counter`, `showcase`, …)
-#   - ui-groovy/tests/   — Playwright e2e harness against this server
+#   - ui-groovy/run/         — ui-groovy alone
+#   - plotly-express/run/    — plotly-express alone
+#   - <module>/tests/        — Playwright e2e harness
 
-include:
-  - path: ui-groovy/run/docker-compose.yml
+services:
+  deephaven:
+    image: ghcr.io/deephaven/server-slim:edge
+    ports:
+      - "10000:10000"
+    volumes:
+      # `./gradlew assembleAll` collects each subproject's plugin JAR into build/libs at the
+      # groovy-plugins root, then this single mount puts them all on server-slim's classpath.
+      - ./build/libs:/apps/libs:ro
+      # Combined app.d with one demo from each plugin so the server has something to render.
+      - ./app.d:/app.d:ro
+    environment:
+      - START_OPTS=-Xmx2g -DAuthHandlers=io.deephaven.auth.AnonymousAuthenticationHandler -Ddeephaven.console.type=groovy -Ddeephaven.application.dir=/app.d
