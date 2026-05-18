@@ -19,7 +19,7 @@
 import io.deephaven.appmode.ApplicationContext
 import io.deephaven.engine.context.QueryScope
 import io.deephaven.engine.util.TableTools
-import io.deephaven.plot.express.Express
+import io.deephaven.plot.express.Express as Dx
 import io.deephaven.time.DateTimeUtils
 
 // Build a source table matching express_source in tests/app.d/express.py.
@@ -43,15 +43,15 @@ def ohlc_source = TableTools.emptyTable(3).update(
         "Close = (double)(i + 1) + 0.5d",
 )
 
-def express_fig = Express.bar(express_source, x: "Categories", y: "Values")
-def title_fig = Express.scatter(express_source, x: "Values", y: "Values2", title: "Test Title")
-def scatter_fig = Express.scatter(express_source, x: "Values", y: "Values2")
-def line_plot = Express.line(express_source, x: "Values", y: "Values2")
-def bar_x_fig = Express.bar(express_source, x: "Values")
-def bar_y_fig = Express.bar(express_source, y: "Values2")
-def ohlc_fig = Express.ohlc(ohlc_source, x: "Timestamp", open: "Open", high: "High", low: "Low", close: "Close")
-def candlestick_fig = Express.candlestick(ohlc_source, x: "Timestamp", open: "Open", high: "High", low: "Low", close: "Close")
-def express_indicator = Express.indicator(express_source, value: "Values", title: "Indicator")
+def express_fig = Dx.bar(express_source, x: "Categories", y: "Values")
+def title_fig = Dx.scatter(express_source, x: "Values", y: "Values2", title: "Test Title")
+def scatter_fig = Dx.scatter(express_source, x: "Values", y: "Values2")
+def line_plot = Dx.line(express_source, x: "Values", y: "Values2")
+def bar_x_fig = Dx.bar(express_source, x: "Values")
+def bar_y_fig = Dx.bar(express_source, y: "Values2")
+def ohlc_fig = Dx.ohlc(ohlc_source, x: "Timestamp", open: "Open", high: "High", low: "Low", close: "Close")
+def candlestick_fig = Dx.candlestick(ohlc_source, x: "Timestamp", open: "Open", high: "High", low: "Low", close: "Close")
+def express_indicator = Dx.indicator(express_source, value: "Values", title: "Indicator")
 
 // Ticking source: merge static rows with a 1-second ticking table, take head(3) so the chart
 // keeps refreshing as new ticks arrive. The wire format for a ticking Table is identical to a
@@ -63,13 +63,13 @@ def ticking_head = TableTools.timeTable("PT1s").view(
         "Values2 = (int)20",
 )
 def ticking_source = TableTools.merge(express_view, ticking_head).head(3)
-def ticking_fig = Express.bar(ticking_source, x: "Categories", y: "Values")
+def ticking_fig = Dx.bar(ticking_source, x: "Categories", y: "Values")
 
 // Partitioned source: one constituent table per Categories value. The plugin fans out into one
 // trace per partition, colors them from the colorway, and emits a separate Table reference for
 // each constituent so the JS plugin can subscribe to each independently.
 def partitioned_source = express_source.partitionBy("Categories")
-def partitioned_fig = Express.bar(partitioned_source, x: "Values", y: "Values2", by: "Categories")
+def partitioned_fig = Dx.bar(partitioned_source, x: "Values", y: "Values2", by: "Categories")
 
 // Groovy app mode doesn't auto-export top-level vars (Python does); each fixture needs an
 // explicit setField call.

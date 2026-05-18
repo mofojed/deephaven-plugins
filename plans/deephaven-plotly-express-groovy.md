@@ -108,8 +108,10 @@ the existing `tests/express.spec.ts` targets the Groovy backend unchanged):
 ### Public DSL — `src/main/groovy/io/deephaven/plot/express/`
 - `Express.groovy` — `static` methods: `scatter`, `line`, `bar`, `ohlc`,
   `candlestick`, `indicator`. All accept Groovy named args via the
-  `(Map opts = [:], Object table)` convention so
-  `Express.scatter(table, x: 'A', y: 'B')` reads naturally.
+  `(Map opts = [:], Object table)` convention. User scripts pull it in with
+  `import io.deephaven.plot.express.Express as Dx` so call sites read
+  `Dx.scatter(table, x: 'A', y: 'B')`, mirroring Python's
+  `import deephaven.plot.express as dx`.
 
 ### Build & run
 - Slots into the existing `groovy-plugins/` multi-project Gradle build as
@@ -264,7 +266,8 @@ that file was extracted from one fixture's golden and now serves all of them
    `tests/express.spec.ts`.
 
 10. **Documentation pass.** No README in the subproject. A Python → Groovy
-    cheatsheet (`dx.scatter(...)` → `Express.scatter(...)`) plus a list of
+    cheatsheet (`dx.scatter(...)` → `Dx.scatter(...)` with the standard
+    `import io.deephaven.plot.express.Express as Dx`) plus a list of
     supported plot kwargs per builder would help adoption.
 
 11. **`bar` colorway customisation.** Python supports `color_discrete_sequence`,
@@ -365,7 +368,7 @@ areas:
     Playwright's `getByRole({ exact: true })`.
 
 15. **Groovy named args collapse to a leading Map.** Builders accept
-    `(Map opts = [:], Object table)` so `Express.bar(table, x:'A', y:'B')`
+    `(Map opts = [:], Object table)` so `Dx.bar(table, x:'A', y:'B')`
     binds the named args to `opts`. Order matters: positional table comes
     second in the method signature, even though the caller writes it first.
 

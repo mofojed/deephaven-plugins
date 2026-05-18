@@ -1,6 +1,7 @@
 package io.deephaven.plot.express
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.deephaven.plot.express.Express as Dx
 import io.deephaven.plot.express.figure.DeephavenFigure
 import io.deephaven.plot.express.figure.Exporter
 import spock.lang.Shared
@@ -63,15 +64,15 @@ class FigureBuilderGoldenSpec extends Specification {
 
         where:
         fixtureName               | builder
-        "golden_express_fig"      | { -> Express.bar(source, x: "Categories", y: "Values") }
-        "golden_scatter_fig"      | { -> Express.scatter(source, x: "Values", y: "Values2") }
-        "golden_title_fig"        | { -> Express.scatter(source, x: "Values", y: "Values2", title: "Test Title") }
-        "golden_line_plot"        | { -> Express.line(source, x: "Values", y: "Values2") }
-        "golden_ohlc_fig"         | { -> Express.ohlc(ohlcSource, x: "Timestamp", open: "Open", high: "High", low: "Low", close: "Close") }
-        "golden_candlestick_fig"  | { -> Express.candlestick(ohlcSource, x: "Timestamp", open: "Open", high: "High", low: "Low", close: "Close") }
-        "golden_express_indicator"| { -> Express.indicator(source, value: "Values", title: "Indicator") }
-        "golden_bar_x_fig"        | { -> Express.bar(source, x: "Values") }
-        "golden_bar_y_fig"        | { -> Express.bar(source, y: "Values2") }
+        "golden_express_fig"      | { -> Dx.bar(source, x: "Categories", y: "Values") }
+        "golden_scatter_fig"      | { -> Dx.scatter(source, x: "Values", y: "Values2") }
+        "golden_title_fig"        | { -> Dx.scatter(source, x: "Values", y: "Values2", title: "Test Title") }
+        "golden_line_plot"        | { -> Dx.line(source, x: "Values", y: "Values2") }
+        "golden_ohlc_fig"         | { -> Dx.ohlc(ohlcSource, x: "Timestamp", open: "Open", high: "High", low: "Low", close: "Close") }
+        "golden_candlestick_fig"  | { -> Dx.candlestick(ohlcSource, x: "Timestamp", open: "Open", high: "High", low: "Low", close: "Close") }
+        "golden_express_indicator"| { -> Dx.indicator(source, value: "Values", title: "Indicator") }
+        "golden_bar_x_fig"        | { -> Dx.bar(source, x: "Values") }
+        "golden_bar_y_fig"        | { -> Dx.bar(source, y: "Values2") }
     }
 
     /** Comparison helper. Strips template + placeholder x/y data before diffing. */

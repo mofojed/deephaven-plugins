@@ -2,15 +2,15 @@
 
 import io.deephaven.appmode.ApplicationContext
 import io.deephaven.engine.util.TableTools
-import io.deephaven.plot.express.Express
+import io.deephaven.plot.express.Express as Dx
 
 def demo_source = TableTools.emptyTable(10).update(
         "X = (int)i",
         "Y = (int)(i * i)",
 )
 
-def demo_scatter = Express.scatter(demo_source, x: "X", y: "Y", title: "plotly-express smoke")
-def demo_line = Express.line(demo_source, x: "X", y: "Y")
+def demo_scatter = Dx.scatter(demo_source, x: "X", y: "Y", title: "plotly-express smoke")
+def demo_line = Dx.line(demo_source, x: "X", y: "Y")
 
 def app = ApplicationContext.get()
 app.setField("demo_scatter", demo_scatter, "plotly-express scatter demo")

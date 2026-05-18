@@ -13,9 +13,12 @@ import io.deephaven.plot.express.figure.DeephavenFigure
  * {@code dx.<fn>} signatures. Usage from a Groovy console:
  *
  * <pre>
- * import io.deephaven.plot.express.Express
- * def fig = Express.scatter(myTable, x: 'Values', y: 'Values2', title: 'My plot')
+ * import io.deephaven.plot.express.Express as Dx
+ * def fig = Dx.scatter(myTable, x: 'Values', y: 'Values2', title: 'My plot')
  * </pre>
+ *
+ * <p>The {@code as Dx} alias mirrors Python's {@code import deephaven.plot.express as dx}
+ * so call sites read identically across the two backends.
  *
  * <p>Each method accepts Groovy named-arg syntax: positional table first, named opts after.
  * Internally the named opts become the {@code Map} first parameter per Groovy convention.
