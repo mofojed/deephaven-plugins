@@ -83,6 +83,25 @@ class ComponentsSpec extends Specification {
         encoded.props.children[0].props.children == 'Apple'
     }
 
+    @Unroll
+    def "Ui.icon('#inputName') renders as deephaven.ui.icons.#expectedName"() {
+        when:
+        def encoded = encode(Ui.icon(inputName, size: 'S'))
+
+        then:
+        encoded.__dhElemName == "deephaven.ui.icons.${expectedName}"
+        encoded.props.size == 'S'
+
+        where:
+        inputName     | expectedName
+        'add'         | 'vsAdd'
+        'vsWarning'   | 'vsWarning'
+        'vs_add'      | 'vsAdd'
+        'trash'       | 'vsTrash'
+        'vscode'      | 'vsVscode'
+        'vscode_insiders' | 'vsVscodeInsiders'
+    }
+
     def "tabs with tab_list and tab_panels nests correctly"() {
         when:
         def encoded = encode(Ui.tabs(

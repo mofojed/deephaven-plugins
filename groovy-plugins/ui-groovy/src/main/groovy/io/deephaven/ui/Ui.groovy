@@ -36,6 +36,7 @@ class Ui {
 
     private static int nextUserComponentId = 0
     private static final String COMPONENT_NAME_PREFIX = "deephaven.ui.components."
+    private static final String ICON_NAME_PREFIX = "deephaven.ui.icons."
     private static final String USER_NAME_PREFIX = "deephaven.ui.user."
 
     private Ui() {}
@@ -307,7 +308,50 @@ class Ui {
     static Element fragment(Map props = [:], Object... children) { componentElement('Fragment', props, children) }
     static Element grid(Map props = [:], Object... children) { componentElement('Grid', props, children) }
     static Element heading(Map props = [:], Object... children) { componentElement('Heading', props, children) }
+
+    /**
+     * Python-parity icon helper. Accepts icon names like {@code "add"}, {@code "vsAdd"},
+     * {@code "vs_add"}, {@code "dh_warning_filled"} and emits a dedicated icon element key
+     * ({@code deephaven.ui.icons.<name>}) that the JS renderer maps to @deephaven/icons.
+     */
+    static Element icon(String name, Map props = [:]) {
+        iconByName(name, props)
+    }
+
+    /** Named-args-first variant: {@code Ui.icon(size: 'S', 'add')}. */
+    static Element icon(Map props, String name) {
+        iconByName(name, props)
+    }
+
+    /**
+     * Generic Spectrum Icon component passthrough. Kept for backwards compatibility with usages
+     * that provide explicit children (e.g. custom icon React nodes).
+     */
     static Element icon(Map props = [:], Object... children) { componentElement('Icon', props, children) }
+
+    private static Element iconByName(String name, Map props) {
+        String resolved = resolveIconName(name)
+        Map mergedProps = (props == null) ? new LinkedHashMap() : new LinkedHashMap(props)
+        String key = (mergedProps.remove('key') as String)
+        new BaseElement(ICON_NAME_PREFIX + resolved, null, key, mergedProps)
+    }
+
+    private static String resolveIconName(String name) {
+        if (name == null) {
+            throw new IllegalArgumentException('Ui.icon name must not be null')
+        }
+        if (name.isEmpty()) {
+            throw new IllegalArgumentException('Ui.icon name must not be blank')
+        }
+
+        String mapped = IconMapping.ICONS.get(name)
+        if (mapped != null) {
+            return mapped
+        }
+
+        throw new IllegalArgumentException("Unknown icon name: ${name}")
+    }
+
     static Element illustratedMessage(Map props = [:], Object... children) { componentElement('IllustratedMessage', props, children) }
     static Element image(Map props = [:], Object... children) { componentElement('Image', props, children) }
     static Element inlineAlert(Map props = [:], Object... children) { componentElement('InlineAlert', props, children) }
