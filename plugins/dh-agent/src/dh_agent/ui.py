@@ -181,100 +181,10 @@ def _chat_panel(state: AgentState, agent: Agent):
     )
 
 
-# Names of deephaven.ui golden-layout containers. Panels and dashboard layouts
-# (Dashboard/Panel/Row/Column/Stack) can ONLY appear at the top level of a
-# dashboard -- never nested inside a ui.panel or ui.tab. The agent's output area
-# is itself a panel with tabs, so to display an agent-created dashboard *inside*
-# it we convert those containers into equivalent flex layouts.
-_UI_DASHBOARD = "deephaven.ui.components.Dashboard"
-_UI_PANEL = "deephaven.ui.components.Panel"
-_UI_ROW = "deephaven.ui.components.Row"
-_UI_COLUMN = "deephaven.ui.components.Column"
-_UI_STACK = "deephaven.ui.components.Stack"
-
-
-def _ui_children(node: Any) -> list[Any]:
-    children = node.render().get("children")
-    if children is None:
-        return []
-    return children if isinstance(children, list) else [children]
-
-
-def _function_layout_children(node: Any) -> list[Any] | None:
-    """Best-effort: render a hook-free FunctionElement to inspect its layout.
-
-    A dashboard's content is often a component (FunctionElement) that returns
-    panels, e.g. ``ui.dashboard(my_component())``. Those panels are produced at
-    render time, so we can't see them without rendering. We render the function
-    directly; if it uses hooks it raises ``NoContextException`` (no active render
-    context) and we fall back to leaving the element untouched. Stateless layout
-    components render cleanly and let us convert their panels to flex.
-    """
-    try:
-        from deephaven.ui.elements import (  # type: ignore[import-not-found]
-            FunctionElement,
-        )
-    except Exception:
-        return None
-    if not isinstance(node, FunctionElement):
-        return None
-    try:
-        children = node.render().get("children")
-    except Exception:
-        return None
-    if children is None:
-        return []
-    return children if isinstance(children, list) else [children]
-
-
-def _transform_ui(node: Any) -> Any:
-    """Convert dashboard layout containers to flex so they render in a tab.
-
-    Dashboard/Panel wrappers are unwrapped; Row/Column/Stack become a flex with
-    the matching direction. Stateless component children are expanded so their
-    panels can be converted too. Leaf elements (inputs, tables, stateful
-    components, etc.) are returned unchanged.
-    """
-    name = getattr(node, "name", None)
-    if name in (_UI_DASHBOARD, _UI_PANEL):
-        kids = [_transform_ui(c) for c in _ui_children(node)]
-        if len(kids) == 1:
-            return kids[0]
-        return ui.flex(*kids, direction="column", flex_grow=1)
-    if name == _UI_ROW:
-        kids = [_transform_ui(c) for c in _ui_children(node)]
-        return ui.flex(*kids, direction="row", flex_grow=1)
-    if name in (_UI_COLUMN, _UI_STACK):
-        kids = [_transform_ui(c) for c in _ui_children(node)]
-        return ui.flex(*kids, direction="column", flex_grow=1)
-
-    fn_children = _function_layout_children(node)
-    if fn_children is not None:
-        kids = [_transform_ui(c) for c in fn_children]
-        if len(kids) == 1:
-            return kids[0]
-        return ui.flex(*kids, direction="column", flex_grow=1)
-
-    return node
-
-
-def _ui_tab_content(value: Any) -> Any:
-    """Wrap a deephaven.ui element so it fills the width/height of its tab."""
-    try:
-        inner = _transform_ui(value)
-    except Exception:
-        # Fall back to rendering the element as-is rather than breaking the tab.
-        inner = value
-    return ui.flex(inner, direction="column", width="100%", height="100%")
-
-
 def _output_tab(output: OutputTab) -> Any:
-    if output.kind == "table":
-        content = ui.table(output.value)
-    elif output.kind == "ui":
-        content = _ui_tab_content(output.value)
-    else:
-        content = output.value
+    # Tables are wrapped in ui.table; everything else (figures, deephaven.ui
+    # components, and dashboards) renders directly as a widget in the tab.
+    content = ui.table(output.value) if output.kind == "table" else output.value
     return ui.tab(content, title=output.title, key=output.key)
 
 
