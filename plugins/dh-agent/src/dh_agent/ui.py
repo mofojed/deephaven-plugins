@@ -181,8 +181,31 @@ def _chat_panel(state: AgentState, agent: Agent):
     )
 
 
+def _unwrap_ui_value(value: Any) -> Any:
+    """Prepare a deephaven.ui element for embedding in a tab.
+
+    A ``ui.dashboard`` is a top-level layout and cannot be nested inside a tab,
+    so render its inner content instead.
+    """
+    try:
+        from deephaven.ui.elements import (  # type: ignore[import-not-found]
+            DashboardElement,
+        )
+
+        if isinstance(value, DashboardElement):
+            return value.render().get("children", value)
+    except Exception:
+        pass
+    return value
+
+
 def _output_tab(output: OutputTab) -> Any:
-    content = ui.table(output.value) if output.kind == "table" else output.value
+    if output.kind == "table":
+        content = ui.table(output.value)
+    elif output.kind == "ui":
+        content = _unwrap_ui_value(output.value)
+    else:
+        content = output.value
     return ui.tab(content, title=output.title, key=output.key)
 
 
@@ -194,7 +217,10 @@ def _output_panel(state: AgentState):
     if not outputs:
         return ui.panel(
             ui.view(
-                ui.text("Tables and figures the agent creates will appear here."),
+                ui.text(
+                    "Tables, figures, and ui components the agent creates will "
+                    "appear here."
+                ),
                 padding="size-200",
             ),
             title="Output",

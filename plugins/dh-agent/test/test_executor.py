@@ -17,6 +17,22 @@ class ExecutorTest(ServerTestCase):
         self.assertEqual(output.name, "my_table")
         self.assertEqual(output.kind, "table")
 
+    def test_captures_ui_components_and_dashboards(self):
+        executor = CodeExecutor()
+        result = executor.execute(
+            "from deephaven import ui\n"
+            "@ui.component\n"
+            "def c():\n"
+            "    return ui.text('hi')\n"
+            "widget = c()\n"
+            "board = ui.dashboard(ui.panel(ui.text('x')))\n"
+        )
+
+        self.assertTrue(result.ok, result.error)
+        kinds = {o.name: o.kind for o in result.outputs}
+        self.assertEqual(kinds.get("widget"), "ui")
+        self.assertEqual(kinds.get("board"), "ui")
+
     def test_executes_table_ops_on_background_thread(self):
         # The agent dispatches code from a background thread, which has no
         # ExecutionContext of its own. The executor must re-apply the context

@@ -21,7 +21,7 @@ class CapturedOutput:
 
     name: str
     value: Any
-    kind: str  # "table" | "figure" | "other"
+    kind: str  # "table" | "figure" | "ui" | "other"
 
 
 @dataclass
@@ -55,6 +55,14 @@ def _classify(value: Any) -> str | None:
 
         if isinstance(value, (Table, PartitionedTable)):
             return "table"
+    except Exception:
+        pass
+
+    try:
+        from deephaven.ui.elements import Element  # type: ignore[import-not-found]
+
+        if isinstance(value, Element):
+            return "ui"
     except Exception:
         pass
 
