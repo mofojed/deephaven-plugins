@@ -11,9 +11,23 @@ import json
 import logging
 from typing import Any, Callable, Mapping
 
+from . import skills
 from .executor import CapturedOutput, CodeExecutor
 
 logger = logging.getLogger(__name__)
+
+
+_REFERENCE_NAMES = skills.list_references()
+
+
+def _reference_param_schema() -> dict[str, Any]:
+    schema: dict[str, Any] = {
+        "type": "string",
+        "description": "The reference file name without extension.",
+    }
+    if _REFERENCE_NAMES:
+        schema["enum"] = _REFERENCE_NAMES
+    return schema
 
 
 # JSON schemas advertised to the model.
@@ -63,6 +77,26 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
     {
         "type": "function",
         "function": {
+            "name": "read_skill_reference",
+            "description": (
+                "Read an in-depth Deephaven query-writing reference before "
+                "writing code that uses that feature (joins, aggregations, "
+                "updateby, time operations, plotting, ui, csv, kafka, "
+                "iceberg). Deephaven APIs differ from similar libraries, so "
+                "consult the matching reference first."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name": _reference_param_schema(),
+                },
+                "required": ["name"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "fetch_url",
             "description": (
                 "Fetch the text content of a web page or HTTP API. Use to "
@@ -106,6 +140,7 @@ class ToolBox:
         handler = {
             "run_deephaven_code": self._run_deephaven_code,
             "search_docs": self._search_docs,
+            "read_skill_reference": self._read_skill_reference,
             "fetch_url": self._fetch_url,
         }.get(name)
         if handler is None:
@@ -131,6 +166,13 @@ class ToolBox:
             return "Documentation search is not available in this session."
         result = self._doc_search(query)
         return result or "No relevant documentation found."
+
+    def _read_skill_reference(self, args: Mapping[str, Any]) -> str:
+        name = str(args.get("name", "")).strip()
+        if not name:
+            available = ", ".join(skills.list_references())
+            return f"Provide a reference name. Available: {available}."
+        return skills.read_reference(name)
 
     def _fetch_url(self, args: Mapping[str, Any]) -> str:
         url = str(args.get("url", ""))

@@ -16,7 +16,15 @@ class ToolDispatchTest(unittest.TestCase):
 
     def test_schemas_advertise_all_tools(self):
         names = {schema["function"]["name"] for schema in TOOL_SCHEMAS}
-        self.assertEqual(names, {"run_deephaven_code", "search_docs", "fetch_url"})
+        self.assertEqual(
+            names,
+            {
+                "run_deephaven_code",
+                "search_docs",
+                "read_skill_reference",
+                "fetch_url",
+            },
+        )
 
     def test_run_code_returns_text(self):
         result = self.toolbox.dispatch("run_deephaven_code", {"code": "value = 1 + 1"})
@@ -29,6 +37,15 @@ class ToolDispatchTest(unittest.TestCase):
     def test_search_docs_uses_callback(self):
         result = self.toolbox.dispatch("search_docs", {"query": "join"})
         self.assertEqual(result, "docs for join")
+
+    def test_read_skill_reference_returns_content(self):
+        result = self.toolbox.dispatch("read_skill_reference", {"name": "joins"})
+        self.assertNotIn("Unknown reference", result)
+        self.assertTrue(result.strip())
+
+    def test_read_skill_reference_requires_name(self):
+        result = self.toolbox.dispatch("read_skill_reference", {"name": ""})
+        self.assertIn("Provide a reference name", result)
 
     def test_fetch_url_rejects_non_http(self):
         result = self.toolbox.dispatch("fetch_url", {"url": "file:///etc/passwd"})

@@ -30,7 +30,12 @@ Listener = Callable[[], None]
 
 # Tools the model may call. Used to recognise text-encoded tool calls emitted
 # by models that do not support native function calling.
-_KNOWN_TOOLS = {"run_deephaven_code", "search_docs", "fetch_url"}
+_KNOWN_TOOLS = {
+    "run_deephaven_code",
+    "search_docs",
+    "read_skill_reference",
+    "fetch_url",
+}
 
 # Matches fenced code blocks, optionally tagged ``python``/``py``. Used as a
 # fallback for local models that emit code in markdown instead of calling the
