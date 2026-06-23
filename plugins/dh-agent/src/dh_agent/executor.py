@@ -65,11 +65,33 @@ def _classify(value: Any) -> str | None:
     return None
 
 
+def _capture_exec_context() -> Any:
+    """Capture the current Deephaven ``ExecutionContext``, if available.
+
+    Agent code is executed on a background thread, which has no
+    ``ExecutionContext`` registered by default. Without one, table operations
+    fail with ``ExecutionContextRegistrationException: No ExecutionContext
+    registered``. We capture the context from the (valid) thread that builds the
+    executor and re-apply it around every ``exec`` call -- the same pattern the
+    deephaven.ui ``ElementMessageStream`` uses for its render loop.
+    """
+    try:
+        from deephaven.execution_context import get_exec_ctx
+
+        return get_exec_ctx()
+    except Exception:
+        # No server session (e.g. unit tests) -- nothing to capture.
+        return None
+
+
 class CodeExecutor:
     """Runs code in a persistent namespace and captures renderable outputs."""
 
     def __init__(self, namespace: dict[str, Any] | None = None):
         self._namespace: dict[str, Any] = namespace if namespace is not None else {}
+        # Capture the ExecutionContext now, on the (valid) constructing thread,
+        # so code dispatched later from the agent's background thread can run.
+        self._exec_context = _capture_exec_context()
         # Seed with commonly used imports for convenience.
         self._bootstrap()
 
@@ -93,8 +115,13 @@ class CodeExecutor:
         """Execute ``code`` and return captured stdout, errors and outputs."""
         before = dict(self._namespace)
         stdout = io.StringIO()
+        exec_context = (
+            self._exec_context
+            if self._exec_context is not None
+            else contextlib.nullcontext()
+        )
         try:
-            with contextlib.redirect_stdout(stdout):
+            with contextlib.redirect_stdout(stdout), exec_context:
                 exec(code, self._namespace)
         except Exception:
             return ExecutionResult(

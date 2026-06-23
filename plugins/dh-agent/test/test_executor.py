@@ -1,4 +1,5 @@
 import unittest
+import threading
 
 from .BaseTest import ServerTestCase
 
@@ -15,6 +16,25 @@ class ExecutorTest(ServerTestCase):
         output = result.outputs[0]
         self.assertEqual(output.name, "my_table")
         self.assertEqual(output.kind, "table")
+
+    def test_executes_table_ops_on_background_thread(self):
+        # The agent dispatches code from a background thread, which has no
+        # ExecutionContext of its own. The executor must re-apply the context
+        # captured at construction time, or table ops fail with
+        # ExecutionContextRegistrationException.
+        executor = CodeExecutor()
+        box: dict[str, object] = {}
+
+        def run() -> None:
+            box["result"] = executor.execute("bg = empty_table(3).update(['X = i'])")
+
+        thread = threading.Thread(target=run, daemon=True)
+        thread.start()
+        thread.join()
+
+        result = box["result"]
+        self.assertTrue(result.ok, result.error)
+        self.assertIn("bg", {o.name for o in result.outputs})
 
     def test_persists_namespace_between_calls(self):
         executor = CodeExecutor()
