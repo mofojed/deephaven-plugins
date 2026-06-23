@@ -1,0 +1,228 @@
+"""deephaven.ui chat interface for the local LLM agent.
+
+Left panel: chat (user prompts, assistant markdown, collapsible tool calls).
+Right panel: tabbed view of tables / figures the agent created.
+
+The agent state is created in :func:`agent_chat` (outside any ``@ui.component``)
+so it is shared across viewers, and the panels subscribe to it and re-render
+when the background agent thread updates it.
+"""
+
+from __future__ import annotations
+
+import os
+from typing import Any, Sequence
+
+from deephaven import ui  # type: ignore[attr-defined]
+
+from ._client import OllamaClient
+from .agent import Agent, AgentState, ChatMessage, OutputTab
+from .config import AgentConfig, DEFAULT_CONFIG
+from .executor import CodeExecutor
+from .rag import DocIndex
+from .tools import ToolBox
+
+
+def _use_rerender(state: AgentState) -> None:
+    """Re-render the calling component whenever ``state`` changes.
+
+    Updates are marshalled onto the render thread via the render queue because
+    the agent mutates state from a background thread.
+    """
+    _, set_tick = ui.use_state(0)
+    render_queue = ui.use_render_queue()
+
+    def subscribe():
+        def listener():
+            render_queue(lambda: set_tick(lambda v: v + 1))
+
+        return state.subscribe(listener)
+
+    ui.use_effect(subscribe, [state])
+
+
+def _render_message(message: ChatMessage) -> Any:
+    if message.role == "user":
+        return ui.view(
+            ui.text(message.content),
+            background_color="accent-200",
+            border_radius="medium",
+            padding="size-150",
+            align_self="end",
+            max_width="90%",
+        )
+    if message.role == "assistant":
+        return ui.view(
+            ui.markdown(message.content),
+            background_color="gray-100",
+            border_radius="medium",
+            padding="size-150",
+            max_width="100%",
+        )
+    if message.role == "error":
+        return ui.view(
+            ui.text(message.content),
+            background_color="negative-200",
+            border_radius="medium",
+            padding="size-150",
+        )
+    # Tool call invocation or result, shown collapsed.
+    if message.tool_args is not None:
+        title = f"Calling {message.tool_name}"
+        body = ui.markdown(f"```json\n{message.tool_args}\n```")
+    else:
+        title = f"Result from {message.tool_name}"
+        body = ui.markdown(f"```text\n{message.content}\n```")
+    return ui.disclosure(title=title, panel=body)
+
+
+@ui.component
+def _chat_panel(state: AgentState, agent: Agent):
+    _use_rerender(state)
+    draft, set_draft = ui.use_state("")
+
+    busy = state.busy
+
+    def send():
+        if draft.strip() and not busy:
+            agent.submit(draft)
+            set_draft("")
+
+    messages = state.messages
+    if messages:
+        history: Any = ui.view(
+            ui.flex(
+                *[_render_message(m) for m in messages],
+                direction="column",
+                gap="size-150",
+            ),
+            overflow="auto",
+            flex_grow=1,
+            padding="size-100",
+        )
+    else:
+        history = ui.view(
+            ui.text(
+                "Ask me to build tables, plots, or dashboards. "
+                'For example: "Create a dashboard of World Cup statistics".'
+            ),
+            flex_grow=1,
+            padding="size-200",
+        )
+
+    composer = ui.flex(
+        ui.text_area(
+            value=draft,
+            on_change=set_draft,
+            is_disabled=busy,
+            label=None,
+            flex_grow=1,
+            aria_label="Message",
+        ),
+        ui.button(
+            "Working…" if busy else "Send",
+            on_press=lambda: send(),
+            is_disabled=busy,
+            variant="accent",
+        ),
+        direction="row",
+        gap="size-100",
+        align_items="end",
+    )
+
+    return ui.panel(
+        ui.flex(history, composer, direction="column", height="100%", gap="size-100"),
+        title="Agent Chat",
+    )
+
+
+def _output_tab(output: OutputTab) -> Any:
+    content = ui.table(output.value) if output.kind == "table" else output.value
+    return ui.tab(content, title=output.title, key=output.key)
+
+
+@ui.component
+def _output_panel(state: AgentState):
+    _use_rerender(state)
+    outputs = state.outputs
+
+    if not outputs:
+        return ui.panel(
+            ui.view(
+                ui.text("Tables and figures the agent creates will appear here."),
+                padding="size-200",
+            ),
+            title="Output",
+        )
+
+    return ui.panel(
+        ui.tabs(*[_output_tab(o) for o in outputs]),
+        title="Output",
+    )
+
+
+@ui.component
+def _agent_dashboard(state: AgentState, agent: Agent):
+    return ui.row(
+        _chat_panel(state, agent),
+        _output_panel(state),
+    )
+
+
+def _make_doc_search(client: OllamaClient, docs_paths: Sequence[str], top_k: int):
+    if not docs_paths:
+        return None
+
+    index = DocIndex(docs_paths, client)
+    built = {"done": False}
+
+    def doc_search(query: str) -> str:
+        if not built["done"]:
+            try:
+                index.build()
+            finally:
+                built["done"] = True
+        chunks = index.search(query, top_k=top_k)
+        if not chunks:
+            return "No relevant documentation found."
+        return "\n\n---\n\n".join(
+            f"[{os.path.basename(c.source)}]\n{c.text}" for c in chunks
+        )
+
+    return doc_search
+
+
+def agent_chat(
+    config: AgentConfig = DEFAULT_CONFIG,
+    docs_paths: Sequence[str] | None = None,
+    namespace: dict[str, Any] | None = None,
+):
+    """Create the agent chat widget.
+
+    Args:
+        config: Agent configuration (Ollama host, model, etc.).
+        docs_paths: Directories of markdown docs to index for RAG. Defaults to
+            the ``DH_AGENT_DOCS_PATHS`` environment variable (os.pathsep
+            separated), if set. When empty, documentation search is disabled.
+        namespace: Optional dict used as the execution namespace for generated
+            code. Pass ``globals()`` to let the agent share your session scope.
+
+    Returns:
+        A deephaven.ui dashboard. Assign it to a variable to open it.
+    """
+    if docs_paths is None:
+        env_paths = os.environ.get("DH_AGENT_DOCS_PATHS", "")
+        docs_paths = [p for p in env_paths.split(os.pathsep) if p]
+
+    client = OllamaClient(config)
+    state = AgentState()
+    executor = CodeExecutor(namespace)
+    doc_search = _make_doc_search(client, docs_paths, config.rag_top_k)
+    toolbox = ToolBox(
+        executor=executor,
+        on_outputs=state.add_outputs,
+        doc_search=doc_search,
+    )
+    agent = Agent(state=state, client=client, toolbox=toolbox, config=config)
+
+    return ui.dashboard(_agent_dashboard(state, agent))
