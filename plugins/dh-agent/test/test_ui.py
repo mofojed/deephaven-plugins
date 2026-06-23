@@ -2,76 +2,45 @@ from .BaseTest import ServerTestCase
 
 from deephaven import ui
 
-from dh_agent.agent import OutputTab
-from dh_agent.ui import (
-    _dashboard_layout_child,
-    _is_dashboard_layout,
-    _split_outputs,
-    _ui_tab_content,
-)
+from dh_agent.ui import _transform_ui, _ui_tab_content
 
 
-def _ui_output(value, key="k", title="t"):
-    return OutputTab(key=key, title=title, value=value, kind="ui")
+class TransformUiTest(ServerTestCase):
+    def test_single_panel_dashboard_unwraps_to_content(self):
+        dash = ui.dashboard(ui.panel(ui.text("hi")))
+        result = _transform_ui(dash)
+        self.assertEqual(result.name, "deephaven.ui.components.Text")
 
+    def test_row_of_panels_becomes_flex(self):
+        dash = ui.dashboard(ui.row(ui.panel(ui.text("a")), ui.panel(ui.text("b"))))
+        result = _transform_ui(dash)
+        self.assertEqual(result.name, "deephaven.ui.components.Flex")
+        self.assertEqual(len(result.render().get("children")), 2)
 
-class DashboardLayoutSplitTest(ServerTestCase):
-    def test_dashboard_is_layout_output(self):
-        self.assertTrue(_is_dashboard_layout(ui.dashboard(ui.panel(ui.text("hi")))))
-
-    def test_panel_is_layout_output(self):
-        self.assertTrue(_is_dashboard_layout(ui.panel(ui.text("hi"))))
-
-    def test_plain_component_is_not_layout_output(self):
-        @ui.component
-        def c():
-            return ui.text("x")
-
-        self.assertFalse(_is_dashboard_layout(c()))
-
-    def test_split_routes_dashboards_to_layout(self):
-        dash = _ui_output(ui.dashboard(ui.panel(ui.text("hi"))), key="d")
-
-        @ui.component
-        def c():
-            return ui.text("x")
-
-        comp = _ui_output(c(), key="c")
-        table_out = OutputTab(key="t", title="t", value=object(), kind="table")
-
-        layout, tabbed = _split_outputs([dash, comp, table_out])
-
-        self.assertEqual([o.key for o in layout], ["d"])
-        self.assertEqual([o.key for o in tabbed], ["c", "t"])
-
-
-class DashboardLayoutChildTest(ServerTestCase):
-    def test_dashboard_unwraps_to_inner_layout(self):
-        inner = ui.row(ui.panel(ui.text("a")), ui.panel(ui.text("b")))
-        child = _dashboard_layout_child(_ui_output(ui.dashboard(inner)))
-        self.assertEqual(child.name, "deephaven.ui.components.Row")
-
-    def test_dashboard_with_component_inner_wraps_in_panel(self):
+    def test_dashboard_of_stateless_component_unwraps(self):
+        # A dashboard whose content is a hook-free component returning panels.
+        # The panels are hidden inside the component until rendered; the
+        # transform renders it to convert those panels to flex.
         @ui.component
         def board():
             return ui.row(ui.panel(ui.text("a")), ui.panel(ui.text("b")))
 
-        child = _dashboard_layout_child(_ui_output(ui.dashboard(board())))
-        # A FunctionElement inner must be wrapped so it is a valid panel child.
-        self.assertEqual(child.name, "deephaven.ui.components.Panel")
+        result = _transform_ui(ui.dashboard(board()))
+        self.assertEqual(result.name, "deephaven.ui.components.Flex")
 
-    def test_panel_passes_through(self):
-        panel = ui.panel(ui.text("hi"))
-        self.assertIs(_dashboard_layout_child(_ui_output(panel)), panel)
-
-
-class UiTabContentTest(ServerTestCase):
-    def test_wrapper_fills_tab(self):
+    def test_stateful_component_passes_through(self):
+        # A component using hooks cannot be rendered without a context, so it is
+        # left untouched for the deephaven.ui renderer to handle.
         @ui.component
-        def c():
-            return ui.text("hi")
+        def stateful():
+            value, _ = ui.use_state(0)
+            return ui.text(str(value))
 
-        wrapper = _ui_tab_content(c())
+        element = stateful()
+        self.assertIs(_transform_ui(element), element)
+
+    def test_wrapper_fills_tab(self):
+        wrapper = _ui_tab_content(ui.dashboard(ui.panel(ui.text("hi"))))
         props = wrapper.render()
         self.assertEqual(wrapper.name, "deephaven.ui.components.Flex")
         self.assertEqual(props.get("width"), "100%")

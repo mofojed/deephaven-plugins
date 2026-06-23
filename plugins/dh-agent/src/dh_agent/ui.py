@@ -182,17 +182,15 @@ def _chat_panel(state: AgentState, agent: Agent):
 
 
 # Names of deephaven.ui golden-layout containers. Panels and dashboard layouts
-# can only appear as children of a dashboard layout -- never nested inside a
-# ui.panel or ui.tab. We therefore surface agent-created dashboards/panels as
-# siblings in the top-level dashboard row rather than embedding them in a tab.
+# (Dashboard/Panel/Row/Column/Stack) can ONLY appear at the top level of a
+# dashboard -- never nested inside a ui.panel or ui.tab. The agent's output area
+# is itself a panel with tabs, so to display an agent-created dashboard *inside*
+# it we convert those containers into equivalent flex layouts.
 _UI_DASHBOARD = "deephaven.ui.components.Dashboard"
 _UI_PANEL = "deephaven.ui.components.Panel"
 _UI_ROW = "deephaven.ui.components.Row"
 _UI_COLUMN = "deephaven.ui.components.Column"
 _UI_STACK = "deephaven.ui.components.Stack"
-
-# Containers that are valid as direct children of a dashboard layout.
-_UI_LAYOUT_CHILDREN = (_UI_PANEL, _UI_ROW, _UI_COLUMN, _UI_STACK)
 
 
 def _ui_children(node: Any) -> list[Any]:
@@ -202,51 +200,72 @@ def _ui_children(node: Any) -> list[Any]:
     return children if isinstance(children, list) else [children]
 
 
-def _is_dashboard_layout(value: Any) -> bool:
-    """True for ui elements that must live in a dashboard layout (not a tab)."""
-    return getattr(value, "name", None) in (_UI_DASHBOARD, *_UI_LAYOUT_CHILDREN)
+def _function_layout_children(node: Any) -> list[Any] | None:
+    """Best-effort: render a hook-free FunctionElement to inspect its layout.
 
-
-def _split_outputs(
-    outputs: Sequence[OutputTab],
-) -> tuple[list[OutputTab], list[OutputTab]]:
-    """Partition outputs into (dashboard-layout, tabbed) groups.
-
-    Dashboards and panels cannot be nested inside the Output tab panel, so they
-    are spliced into the top-level dashboard row. Everything else (tables,
-    figures, and plain ui components) renders in the Output tabs.
+    A dashboard's content is often a component (FunctionElement) that returns
+    panels, e.g. ``ui.dashboard(my_component())``. Those panels are produced at
+    render time, so we can't see them without rendering. We render the function
+    directly; if it uses hooks it raises ``NoContextException`` (no active render
+    context) and we fall back to leaving the element untouched. Stateless layout
+    components render cleanly and let us convert their panels to flex.
     """
-    layout: list[OutputTab] = []
-    tabbed: list[OutputTab] = []
-    for output in outputs:
-        if output.kind == "ui" and _is_dashboard_layout(output.value):
-            layout.append(output)
-        else:
-            tabbed.append(output)
-    return layout, tabbed
+    try:
+        from deephaven.ui.elements import (  # type: ignore[import-not-found]
+            FunctionElement,
+        )
+    except Exception:
+        return None
+    if not isinstance(node, FunctionElement):
+        return None
+    try:
+        children = node.render().get("children")
+    except Exception:
+        return None
+    if children is None:
+        return []
+    return children if isinstance(children, list) else [children]
 
 
-def _dashboard_layout_child(output: OutputTab) -> Any:
-    """Convert a dashboard/panel output into a valid dashboard-layout child."""
-    value = output.value
-    name = getattr(value, "name", None)
-    if name == _UI_DASHBOARD:
-        kids = _ui_children(value)
-        inner = kids[0] if len(kids) == 1 else ui.column(*kids)
-        return _ensure_layout_child(inner, output)
-    return _ensure_layout_child(value, output)
+def _transform_ui(node: Any) -> Any:
+    """Convert dashboard layout containers to flex so they render in a tab.
 
+    Dashboard/Panel wrappers are unwrapped; Row/Column/Stack become a flex with
+    the matching direction. Stateless component children are expanded so their
+    panels can be converted too. Leaf elements (inputs, tables, stateful
+    components, etc.) are returned unchanged.
+    """
+    name = getattr(node, "name", None)
+    if name in (_UI_DASHBOARD, _UI_PANEL):
+        kids = [_transform_ui(c) for c in _ui_children(node)]
+        if len(kids) == 1:
+            return kids[0]
+        return ui.flex(*kids, direction="column", flex_grow=1)
+    if name == _UI_ROW:
+        kids = [_transform_ui(c) for c in _ui_children(node)]
+        return ui.flex(*kids, direction="row", flex_grow=1)
+    if name in (_UI_COLUMN, _UI_STACK):
+        kids = [_transform_ui(c) for c in _ui_children(node)]
+        return ui.flex(*kids, direction="column", flex_grow=1)
 
-def _ensure_layout_child(node: Any, output: OutputTab) -> Any:
-    """Panels/rows/columns/stacks are valid as-is; wrap anything else in a panel."""
-    if getattr(node, "name", None) in _UI_LAYOUT_CHILDREN:
-        return node
-    return ui.panel(node, title=output.title)
+    fn_children = _function_layout_children(node)
+    if fn_children is not None:
+        kids = [_transform_ui(c) for c in fn_children]
+        if len(kids) == 1:
+            return kids[0]
+        return ui.flex(*kids, direction="column", flex_grow=1)
+
+    return node
 
 
 def _ui_tab_content(value: Any) -> Any:
-    """Wrap a (non-layout) deephaven.ui element so it fills its tab."""
-    return ui.flex(value, direction="column", width="100%", height="100%")
+    """Wrap a deephaven.ui element so it fills the width/height of its tab."""
+    try:
+        inner = _transform_ui(value)
+    except Exception:
+        # Fall back to rendering the element as-is rather than breaking the tab.
+        inner = value
+    return ui.flex(inner, direction="column", width="100%", height="100%")
 
 
 def _output_tab(output: OutputTab) -> Any:
@@ -262,14 +281,14 @@ def _output_tab(output: OutputTab) -> Any:
 @ui.component
 def _output_panel(state: AgentState):
     _use_rerender(state)
-    _, tabbed = _split_outputs(state.outputs)
+    outputs = state.outputs
 
-    if not tabbed:
+    if not outputs:
         return ui.panel(
             ui.view(
                 ui.text(
                     "Tables, figures, and ui components the agent creates will "
-                    "appear here. Dashboards open as their own panels."
+                    "appear here."
                 ),
                 padding="size-200",
             ),
@@ -277,18 +296,17 @@ def _output_panel(state: AgentState):
         )
 
     return ui.panel(
-        ui.tabs(*[_output_tab(o) for o in tabbed]),
+        ui.tabs(*[_output_tab(o) for o in outputs]),
         title="Output",
     )
 
 
 @ui.component
 def _agent_dashboard(state: AgentState, agent: Agent):
-    _use_rerender(state)
-    layout, _ = _split_outputs(state.outputs)
-    children = [_chat_panel(state, agent), _output_panel(state)]
-    children.extend(_dashboard_layout_child(o) for o in layout)
-    return ui.row(*children)
+    return ui.row(
+        _chat_panel(state, agent),
+        _output_panel(state),
+    )
 
 
 def _make_doc_search(
