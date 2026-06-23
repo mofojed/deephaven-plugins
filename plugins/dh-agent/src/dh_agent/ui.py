@@ -66,6 +66,12 @@ def _render_message(message: ChatMessage) -> Any:
             border_radius="medium",
             padding="size-150",
         )
+    if message.role == "status":
+        return ui.view(
+            ui.markdown(f"_{message.content}_"),
+            align_self="center",
+            padding="size-100",
+        )
     # Tool call invocation or result, shown collapsed.
     if message.tool_args is not None:
         title = f"Calling {message.tool_name}"
@@ -119,11 +125,18 @@ def _chat_panel(state: AgentState, agent: Agent):
             flex_grow=1,
             aria_label="Message",
         ),
-        ui.button(
-            "Working…" if busy else "Send",
-            on_press=lambda: send(),
-            is_disabled=busy,
-            variant="accent",
+        (
+            ui.button(
+                "Stop",
+                on_press=lambda: agent.cancel(),
+                variant="negative",
+            )
+            if busy
+            else ui.button(
+                "Send",
+                on_press=lambda: send(),
+                variant="accent",
+            )
         ),
         direction="row",
         gap="size-100",

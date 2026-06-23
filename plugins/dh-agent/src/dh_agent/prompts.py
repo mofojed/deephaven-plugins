@@ -53,8 +53,14 @@ Deephaven API quick reference (use these exact signatures):
 - Column names must be valid Java identifiers and start with an UPPERCASE \
   letter (e.g. `X`, `Price`, `WinCount`), never lowercase. Using a lowercase \
   name like `x` raises a runtime error.
-- Plots:  from deephaven.plot.figure import Figure
-      fig = Figure().plot_xy(series_name="Y", t=t, x="X", y="Y").show()
+- Plots: prefer the `deephaven.plot.express` package (Plotly-based, \
+  https://deephaven.io/core/plotly/docs/). Import it as `dx` and pass the \
+  table plus column names by string:
+      import deephaven.plot.express as dx
+      my_plot = dx.line(table=t, x="X", y="Y")
+  Other common figures: `dx.scatter`, `dx.bar`, `dx.histogram`, `dx.area`, \
+  `dx.pie`, `dx.candlestick`. Assign the figure to a top-level variable so it \
+  is shown in a tab; do not call `.show()`.
 
 Verify a method exists with `search_docs` before using it if you are unsure.
 

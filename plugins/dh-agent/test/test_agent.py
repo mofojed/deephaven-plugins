@@ -201,5 +201,71 @@ class FallbackLoopTest(unittest.TestCase):
         self.assertEqual(state.messages[-1].content, "All set.")
 
 
+class CancellationTest(unittest.TestCase):
+    def _make_agent(self, responses):
+        state = AgentState()
+        client = StubClient(responses)
+        toolbox = ToolBox(executor=CodeExecutor(), on_outputs=state.add_outputs)
+        agent = Agent(state=state, client=client, toolbox=toolbox, config=AgentConfig())
+        return agent, state, client
+
+    def test_cancel_sets_event_only_when_busy(self):
+        agent, state, _ = self._make_agent([])
+        agent.cancel()
+        self.assertFalse(agent._cancel_event.is_set())
+        state.set_busy(True)
+        agent.cancel()
+        self.assertTrue(agent._cancel_event.is_set())
+
+    def test_cancel_before_turn_stops_immediately(self):
+        agent, state, client = self._make_agent([{"content": "hi", "tool_calls": []}])
+        agent._cancel_event.set()
+        agent._run_turn("hello")
+
+        roles = [m.role for m in state.messages]
+        self.assertEqual(len(client.calls), 0)
+        self.assertIn("status", roles)
+        self.assertNotIn("assistant", roles)
+        self.assertFalse(state.busy)
+
+    def test_cancel_during_model_call_skips_tool_execution(self):
+        holder: dict = {}
+
+        class CancellingClient:
+            def __init__(self):
+                self.calls = []
+
+            def chat(self, messages, tools=None):
+                self.calls.append(list(messages))
+                holder["agent"]._cancel_event.set()
+                return {
+                    "content": "",
+                    "tool_calls": [
+                        {
+                            "function": {
+                                "name": "run_deephaven_code",
+                                "arguments": {"code": "leaked = 1"},
+                            }
+                        }
+                    ],
+                }
+
+        state = AgentState()
+        executor = CodeExecutor()
+        client = CancellingClient()
+        toolbox = ToolBox(executor=executor)
+        agent = Agent(state=state, client=client, toolbox=toolbox, config=AgentConfig())
+        holder["agent"] = agent
+
+        agent._run_turn("go")
+
+        self.assertEqual(len(client.calls), 1)
+        roles = [m.role for m in state.messages]
+        self.assertNotIn("tool", roles)
+        self.assertIn("status", roles)
+        self.assertNotIn("leaked", executor.namespace)
+        self.assertFalse(state.busy)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -173,13 +173,25 @@ class Agent:
         self._client = client
         self._toolbox = toolbox
         self._config = config
+        self._cancel_event = threading.Event()
 
     def submit(self, user_text: str) -> None:
         """Handle a user message on a background thread."""
         if not user_text.strip() or self._state.busy:
             return
+        self._cancel_event.clear()
         thread = threading.Thread(target=self._run_turn, args=(user_text,), daemon=True)
         thread.start()
+
+    def cancel(self) -> None:
+        """Request cancellation of the in-progress turn.
+
+        The running turn stops at the next checkpoint (before the next model
+        call or tool execution). An in-flight model/tool call is allowed to
+        finish, but its result is not acted upon further.
+        """
+        if self._state.busy:
+            self._cancel_event.set()
 
     def _run_turn(self, user_text: str) -> None:
         self._state.set_busy(True)
@@ -188,9 +200,13 @@ class Agent:
             self._state.append_llm({"role": "user", "content": user_text})
 
             for _ in range(self._config.max_iterations):
+                if self._cancel_event.is_set():
+                    break
                 message = self._client.chat(
                     self._state.llm_history, tools=self._toolbox.schemas
                 )
+                if self._cancel_event.is_set():
+                    break
                 self._state.append_llm(message)
 
                 content = _get(message, "content") or ""
@@ -208,6 +224,8 @@ class Agent:
 
                 if tool_calls:
                     for call in tool_calls:
+                        if self._cancel_event.is_set():
+                            break
                         self._handle_tool_call(call)
                     continue
 
@@ -221,6 +239,8 @@ class Agent:
                         len(text_tool_calls),
                     )
                     for name, args in text_tool_calls:
+                        if self._cancel_event.is_set():
+                            break
                         self._run_fallback_tool(name, args)
                     continue
 
@@ -233,6 +253,8 @@ class Agent:
                         len(code_blocks),
                     )
                     for code in code_blocks:
+                        if self._cancel_event.is_set():
+                            break
                         self._run_fallback_tool("run_deephaven_code", {"code": code})
                     continue
 
@@ -243,6 +265,10 @@ class Agent:
                 ChatMessage(role="error", content=f"Agent error: {exc}")
             )
         finally:
+            if self._cancel_event.is_set():
+                self._state.add_message(
+                    ChatMessage(role="status", content="Stopped by user.")
+                )
             self._state.set_busy(False)
 
     def _handle_tool_call(self, call: Any) -> None:
