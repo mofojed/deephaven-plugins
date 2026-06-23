@@ -181,29 +181,60 @@ def _chat_panel(state: AgentState, agent: Agent):
     )
 
 
-def _unwrap_ui_value(value: Any) -> Any:
-    """Prepare a deephaven.ui element for embedding in a tab.
+# Names of deephaven.ui golden-layout containers. These only size correctly as
+# direct children of a dashboard, so when embedding agent-created ui in a tab we
+# convert them to flex layouts (otherwise they collapse to zero width).
+_UI_DASHBOARD = "deephaven.ui.components.Dashboard"
+_UI_PANEL = "deephaven.ui.components.Panel"
+_UI_ROW = "deephaven.ui.components.Row"
+_UI_COLUMN = "deephaven.ui.components.Column"
+_UI_STACK = "deephaven.ui.components.Stack"
 
-    A ``ui.dashboard`` is a top-level layout and cannot be nested inside a tab,
-    so render its inner content instead.
+
+def _ui_children(node: Any) -> list[Any]:
+    children = node.render().get("children")
+    if children is None:
+        return []
+    return children if isinstance(children, list) else [children]
+
+
+def _transform_ui(node: Any) -> Any:
+    """Convert dashboard layout containers to flex so they render in a tab.
+
+    Dashboard/Panel wrappers are unwrapped; Row/Column/Stack become a flex with
+    the matching direction. Leaf elements (components, inputs, tables, etc.) are
+    returned unchanged.
     """
-    try:
-        from deephaven.ui.elements import (  # type: ignore[import-not-found]
-            DashboardElement,
-        )
+    name = getattr(node, "name", None)
+    if name in (_UI_DASHBOARD, _UI_PANEL):
+        kids = [_transform_ui(c) for c in _ui_children(node)]
+        if len(kids) == 1:
+            return kids[0]
+        return ui.flex(*kids, direction="column", flex_grow=1)
+    if name == _UI_ROW:
+        kids = [_transform_ui(c) for c in _ui_children(node)]
+        return ui.flex(*kids, direction="row", flex_grow=1)
+    if name in (_UI_COLUMN, _UI_STACK):
+        kids = [_transform_ui(c) for c in _ui_children(node)]
+        return ui.flex(*kids, direction="column", flex_grow=1)
+    return node
 
-        if isinstance(value, DashboardElement):
-            return value.render().get("children", value)
+
+def _ui_tab_content(value: Any) -> Any:
+    """Wrap a deephaven.ui element so it fills the width/height of its tab."""
+    try:
+        inner = _transform_ui(value)
     except Exception:
-        pass
-    return value
+        # Fall back to rendering the element as-is rather than breaking the tab.
+        inner = value
+    return ui.flex(inner, direction="column", width="100%", height="100%")
 
 
 def _output_tab(output: OutputTab) -> Any:
     if output.kind == "table":
         content = ui.table(output.value)
     elif output.kind == "ui":
-        content = _unwrap_ui_value(output.value)
+        content = _ui_tab_content(output.value)
     else:
         content = output.value
     return ui.tab(content, title=output.title, key=output.key)
