@@ -91,6 +91,8 @@ class AgentState:
         self._busy = False
         self._listeners: list[Listener] = []
         self._output_counter = 0
+        self._model = ""
+        self._available_models: list[str] = []
 
     # -- subscription -------------------------------------------------------
     def subscribe(self, listener: Listener) -> Callable[[], None]:
@@ -134,10 +136,30 @@ class AgentState:
         with self._lock:
             return list(self._llm_history)
 
+    @property
+    def model(self) -> str:
+        with self._lock:
+            return self._model
+
+    @property
+    def available_models(self) -> list[str]:
+        with self._lock:
+            return list(self._available_models)
+
     # -- writes -------------------------------------------------------------
     def set_busy(self, busy: bool) -> None:
         with self._lock:
             self._busy = busy
+        self._notify()
+
+    def set_model(self, model: str) -> None:
+        with self._lock:
+            self._model = model
+        self._notify()
+
+    def set_available_models(self, models: list[str]) -> None:
+        with self._lock:
+            self._available_models = list(models)
         self._notify()
 
     def add_message(self, message: ChatMessage) -> None:
@@ -179,6 +201,11 @@ class Agent:
         self._toolbox = toolbox
         self._config = config
         self._cancel_event = threading.Event()
+
+    def set_model(self, model: str) -> None:
+        """Switch the chat model and reflect it in the shared state."""
+        self._client.set_model(model)
+        self._state.set_model(self._client.model)
 
     def submit(self, user_text: str) -> None:
         """Handle a user message on a background thread."""

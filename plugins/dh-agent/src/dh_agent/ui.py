@@ -116,6 +116,29 @@ def _chat_panel(state: AgentState, agent: Agent):
             padding="size-200",
         )
 
+    available_models = state.available_models
+    if available_models:
+        model_control: Any = ui.picker(
+            *available_models,
+            selected_key=state.model,
+            on_change=lambda key: agent.set_model(str(key)),
+            aria_label="Model",
+            label="Model",
+            label_position="side",
+            is_disabled=busy,
+            width="size-3600",
+        )
+    else:
+        model_control = ui.text(f"Model: {state.model or 'unavailable'}")
+
+    header = ui.flex(
+        model_control,
+        direction="row",
+        justify_content="end",
+        align_items="center",
+        gap="size-100",
+    )
+
     composer = ui.flex(
         ui.text_area(
             value=draft,
@@ -144,7 +167,14 @@ def _chat_panel(state: AgentState, agent: Agent):
     )
 
     return ui.panel(
-        ui.flex(history, composer, direction="column", height="100%", gap="size-100"),
+        ui.flex(
+            header,
+            history,
+            composer,
+            direction="column",
+            height="100%",
+            gap="size-100",
+        ),
         title="Agent Chat",
     )
 
@@ -237,5 +267,13 @@ def agent_chat(
         doc_search=doc_search,
     )
     agent = Agent(state=state, client=client, toolbox=toolbox, config=config)
+
+    # Populate the model picker with locally available models, ensuring the
+    # active model is always selectable even if it is not installed yet.
+    available = client.list_models()
+    if client.model not in available:
+        available = [client.model, *available]
+    state.set_available_models(available)
+    state.set_model(client.model)
 
     return ui.dashboard(_agent_dashboard(state, agent))

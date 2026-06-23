@@ -24,10 +24,46 @@ class OllamaClient:
 
         self._config = config
         self._client = ollama.Client(host=config.host)
+        self._model = config.model
 
     @property
     def config(self) -> AgentConfig:
         return self._config
+
+    @property
+    def model(self) -> str:
+        """The chat model currently in use."""
+        return self._model
+
+    def set_model(self, model: str) -> None:
+        """Switch the chat model used for subsequent requests."""
+        if model:
+            self._model = model
+
+    def list_models(self) -> list[str]:
+        """Return the names of locally available Ollama models, sorted.
+
+        Excludes the configured embedding model. Returns an empty list if the
+        server cannot be reached.
+        """
+        try:
+            result = self._client.list()
+        except Exception as exc:  # pragma: no cover - network dependent
+            logger.warning("Could not list Ollama models: %s", exc)
+            return []
+        if isinstance(result, Mapping):
+            raw = result.get("models", [])
+        else:
+            raw = getattr(result, "models", [])
+        names: list[str] = []
+        for item in raw:
+            if isinstance(item, Mapping):
+                name = item.get("model") or item.get("name")
+            else:
+                name = getattr(item, "model", None) or getattr(item, "name", None)
+            if name and name != self._config.embed_model:
+                names.append(str(name))
+        return sorted(set(names))
 
     def chat(
         self,
@@ -45,7 +81,7 @@ class OllamaClient:
             and optionally ``tool_calls``.
         """
         response = self._client.chat(
-            model=self._config.model,
+            model=self._model,
             messages=list(messages),
             tools=list(tools) if tools else None,
             options={"temperature": self._config.temperature},

@@ -18,6 +18,10 @@ class StubClient:
     def __init__(self, responses):
         self._responses = list(responses)
         self.calls = []
+        self.model = "stub-model"
+
+    def set_model(self, model):
+        self.model = model
 
     def chat(self, messages, tools=None):
         self.calls.append(list(messages))
@@ -55,6 +59,24 @@ class AgentStateTest(unittest.TestCase):
         self.assertFalse(state.busy)
         state.set_busy(True)
         self.assertTrue(state.busy)
+
+    def test_model_state(self):
+        state = AgentState()
+        self.assertEqual(state.model, "")
+        self.assertEqual(state.available_models, [])
+        state.set_available_models(["a", "b"])
+        state.set_model("b")
+        self.assertEqual(state.available_models, ["a", "b"])
+        self.assertEqual(state.model, "b")
+
+    def test_agent_set_model_updates_client_and_state(self):
+        state = AgentState()
+        client = StubClient([])
+        toolbox = ToolBox(executor=CodeExecutor(), on_outputs=state.add_outputs)
+        agent = Agent(state=state, client=client, toolbox=toolbox, config=AgentConfig())
+        agent.set_model("new-model")
+        self.assertEqual(client.model, "new-model")
+        self.assertEqual(state.model, "new-model")
 
 
 class AgentLoopTest(unittest.TestCase):
