@@ -40,6 +40,11 @@ class SkillsTest(unittest.TestCase):
         text = "no frontmatter here"
         self.assertEqual(skills._strip_frontmatter(text), text)
 
+    def test_skill_doc_paths_points_at_skill(self):
+        paths = skills.skill_doc_paths()
+        self.assertEqual(len(paths), 1)
+        self.assertTrue(paths[0].endswith("deephaven-core-query-writing"))
+
 
 if __name__ == "__main__":
     unittest.main()

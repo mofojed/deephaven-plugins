@@ -18,6 +18,17 @@ _SKILL_ROOT = (
 _REFERENCES_DIR = _SKILL_ROOT / "references"
 
 
+def skill_doc_paths() -> list[str]:
+    """Return paths to index for documentation search (RAG).
+
+    Defaults to the vendored skill directory so ``search_docs`` works out of
+    the box without the user configuring external docs.
+    """
+    if _SKILL_ROOT.is_dir():
+        return [str(_SKILL_ROOT)]
+    return []
+
+
 def _strip_frontmatter(text: str) -> str:
     """Remove a leading YAML frontmatter block (``--- ... ---``) if present."""
     if not text.startswith("---"):

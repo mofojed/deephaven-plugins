@@ -38,6 +38,16 @@ class ToolDispatchTest(unittest.TestCase):
         result = self.toolbox.dispatch("search_docs", {"query": "join"})
         self.assertEqual(result, "docs for join")
 
+    def test_search_docs_advertised_when_available(self):
+        names = {s["function"]["name"] for s in self.toolbox.schemas}
+        self.assertIn("search_docs", names)
+
+    def test_search_docs_hidden_when_unavailable(self):
+        toolbox = ToolBox(executor=self.executor, doc_search=None)
+        names = {s["function"]["name"] for s in toolbox.schemas}
+        self.assertNotIn("search_docs", names)
+        self.assertIn("run_deephaven_code", names)
+
     def test_read_skill_reference_returns_content(self):
         result = self.toolbox.dispatch("read_skill_reference", {"name": "joins"})
         self.assertNotIn("Unknown reference", result)

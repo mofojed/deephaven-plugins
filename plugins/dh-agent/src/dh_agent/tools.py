@@ -59,8 +59,11 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
         "function": {
             "name": "search_docs",
             "description": (
-                "Search the Deephaven documentation for APIs, syntax, and "
-                "examples. Use this before writing code you are unsure about."
+                "Semantic search over the Deephaven documentation. Returns the "
+                "most relevant doc snippets for a natural-language query. Use "
+                "it liberally: to confirm a method name or signature, find an "
+                "example, or diagnose an error before retrying. Prefer this "
+                "over guessing an API."
             ),
             "parameters": {
                 "type": "object",
@@ -132,6 +135,13 @@ class ToolBox:
 
     @property
     def schemas(self) -> list[dict[str, Any]]:
+        """Tool schemas advertised to the model.
+
+        ``search_docs`` is only advertised when a documentation search backend
+        is configured, so the model does not waste calls on a dead tool.
+        """
+        if self._doc_search is None:
+            return [s for s in TOOL_SCHEMAS if s["function"]["name"] != "search_docs"]
         return TOOL_SCHEMAS
 
     def dispatch(self, name: str, arguments: Mapping[str, Any] | str) -> str:

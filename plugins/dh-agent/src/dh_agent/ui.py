@@ -21,6 +21,7 @@ from .config import AgentConfig, DEFAULT_CONFIG
 from .executor import CodeExecutor
 from .rag import DocIndex
 from .tools import ToolBox
+from . import skills
 
 
 def _use_rerender(state: AgentState) -> None:
@@ -246,7 +247,8 @@ def agent_chat(
         config: Agent configuration (Ollama host, model, etc.).
         docs_paths: Directories of markdown docs to index for RAG. Defaults to
             the ``DH_AGENT_DOCS_PATHS`` environment variable (os.pathsep
-            separated), if set. When empty, documentation search is disabled.
+            separated) if set, otherwise the bundled Deephaven query-writing
+            skill so ``search_docs`` works out of the box.
         namespace: Optional dict used as the execution namespace for generated
             code. Pass ``globals()`` to let the agent share your session scope.
 
@@ -256,6 +258,8 @@ def agent_chat(
     if docs_paths is None:
         env_paths = os.environ.get("DH_AGENT_DOCS_PATHS", "")
         docs_paths = [p for p in env_paths.split(os.pathsep) if p]
+    if not docs_paths:
+        docs_paths = skills.skill_doc_paths()
 
     client = OllamaClient(config)
     state = AgentState()
