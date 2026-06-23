@@ -134,12 +134,16 @@ class DocIndex:
 
     def search(self, query: str, top_k: int = 5) -> list[DocChunk]:
         """Return the most relevant doc chunks for the query."""
+        return [chunk for chunk, _ in self.search_scored(query, top_k=top_k)]
+
+    def search_scored(self, query: str, top_k: int = 5) -> list[tuple[DocChunk, float]]:
+        """Return the most relevant doc chunks paired with similarity scores."""
         if self._embeddings is None or not self._chunks:
             return []
         query_vec = _normalize(np.array(self._client.embed([query]), dtype=np.float32))
         scores = self._embeddings @ query_vec[0]
         top_idx = np.argsort(scores)[::-1][:top_k]
-        return [self._chunks[i] for i in top_idx]
+        return [(self._chunks[i], float(scores[i])) for i in top_idx]
 
 
 def _normalize(matrix: np.ndarray) -> np.ndarray:

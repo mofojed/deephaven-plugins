@@ -47,5 +47,18 @@ class AgentConfig:
     # Number of RAG chunks to retrieve per search.
     rag_top_k: int = field(default_factory=lambda: int(_env("DH_AGENT_RAG_TOP_K", "5")))
 
+    # When local documentation search returns only weak matches (top cosine
+    # similarity below ``doc_min_score``), fall back to searching deephaven.io.
+    web_fallback: bool = field(
+        default_factory=lambda: _env("DH_AGENT_WEB_FALLBACK", "1")
+        not in ("0", "false", "False", "no")
+    )
+
+    # Minimum top cosine similarity for a local docs match to be trusted before
+    # falling back to deephaven.io.
+    doc_min_score: float = field(
+        default_factory=lambda: float(_env("DH_AGENT_DOC_MIN_SCORE", "0.62"))
+    )
+
 
 DEFAULT_CONFIG = AgentConfig()

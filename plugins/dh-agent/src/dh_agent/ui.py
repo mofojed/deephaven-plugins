@@ -18,6 +18,7 @@ from deephaven import ui  # type: ignore[attr-defined]
 from ._client import OllamaClient
 from .agent import Agent, AgentState, ChatMessage, OutputTab
 from .config import AgentConfig, DEFAULT_CONFIG
+from .docs import make_doc_search
 from .executor import CodeExecutor
 from .rag import DocIndex
 from .tools import ToolBox
@@ -213,27 +214,18 @@ def _agent_dashboard(state: AgentState, agent: Agent):
     )
 
 
-def _make_doc_search(client: OllamaClient, docs_paths: Sequence[str], top_k: int):
-    if not docs_paths:
-        return None
-
-    index = DocIndex(docs_paths, client)
-    built = {"done": False}
-
-    def doc_search(query: str) -> str:
-        if not built["done"]:
-            try:
-                index.build()
-            finally:
-                built["done"] = True
-        chunks = index.search(query, top_k=top_k)
-        if not chunks:
-            return "No relevant documentation found."
-        return "\n\n---\n\n".join(
-            f"[{os.path.basename(c.source)}]\n{c.text}" for c in chunks
-        )
-
-    return doc_search
+def _make_doc_search(
+    client: OllamaClient,
+    docs_paths: Sequence[str],
+    config: AgentConfig,
+):
+    index = DocIndex(docs_paths, client) if docs_paths else None
+    return make_doc_search(
+        index,
+        web_fallback=config.web_fallback,
+        min_score=config.doc_min_score,
+        top_k=config.rag_top_k,
+    )
 
 
 def agent_chat(
@@ -264,7 +256,7 @@ def agent_chat(
     client = OllamaClient(config)
     state = AgentState()
     executor = CodeExecutor(namespace)
-    doc_search = _make_doc_search(client, docs_paths, config.rag_top_k)
+    doc_search = _make_doc_search(client, docs_paths, config)
     toolbox = ToolBox(
         executor=executor,
         on_outputs=state.add_outputs,

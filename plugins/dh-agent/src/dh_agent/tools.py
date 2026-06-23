@@ -60,10 +60,11 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
             "name": "search_docs",
             "description": (
                 "Semantic search over the Deephaven documentation. Returns the "
-                "most relevant doc snippets for a natural-language query. Use "
-                "it liberally: to confirm a method name or signature, find an "
-                "example, or diagnose an error before retrying. Prefer this "
-                "over guessing an API."
+                "most relevant doc snippets for a natural-language query, "
+                "falling back to deephaven.io when the local docs lack a strong "
+                "match. Use it liberally: to confirm a method name or "
+                "signature, find an example, or diagnose an error before "
+                "retrying. Prefer this over guessing an API."
             ),
             "parameters": {
                 "type": "object",
