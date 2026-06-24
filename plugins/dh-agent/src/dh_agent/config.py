@@ -25,9 +25,7 @@ class AgentConfig:
     )
 
     # The chat/agent model. Must support tool calling (tagged `tools` on ollama.com).
-    model: str = field(
-        default_factory=lambda: _env("DH_AGENT_MODEL", "qwen2.5-coder:7b")
-    )
+    model: str = field(default_factory=lambda: _env("DH_AGENT_MODEL", "qwen3:30b-a3b"))
 
     # Embedding model used for retrieval-augmented generation (RAG).
     embed_model: str = field(

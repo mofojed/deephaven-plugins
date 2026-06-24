@@ -277,4 +277,4 @@ def agent_chat(
     state.set_available_models(available)
     state.set_model(client.model)
 
-    return ui.dashboard(_agent_dashboard(state, agent))
+    return ui.dashboard(_agent_dashboard(state, agent), show_headers=False)
