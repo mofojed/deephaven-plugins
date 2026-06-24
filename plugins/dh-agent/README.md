@@ -31,7 +31,7 @@ The agent can:
 2. Pull a **tool-calling** chat model and an embedding model (for RAG):
 
    ```sh
-   ollama pull qwen3:30b-a3b
+   ollama pull qwen3-coder:30b
    ollama pull nomic-embed-text
    ```
 

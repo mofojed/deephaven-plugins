@@ -3,7 +3,7 @@
 Run this inside a Deephaven Python console (or a server-backed session) after
 starting Ollama (`ollama serve`) and pulling a tool-capable model.
 
-    ollama pull qwen3:30b-a3b
+    ollama pull qwen3-coder:30b
     # Add any other models you want, though qwen3 seems to work well
     # ollama pull qwen2.5-coder:7b
     ollama pull nomic-embed-text
