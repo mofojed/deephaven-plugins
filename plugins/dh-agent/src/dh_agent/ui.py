@@ -74,14 +74,14 @@ def _render_message(message: ChatMessage) -> Any:
             align_self="center",
             padding="size-100",
         )
-    # Tool call invocation or result, shown collapsed.
+    # Tool call invocation or result, shown collapsed and quiet.
     if message.tool_args is not None:
         title = f"Calling {message.tool_name}"
         body = ui.markdown(f"```json\n{message.tool_args}\n```")
     else:
         title = f"Result from {message.tool_name}"
         body = ui.markdown(f"```text\n{message.content}\n```")
-    return ui.disclosure(title=title, panel=body)
+    return ui.disclosure(title=title, panel=body, is_quiet=True)
 
 
 @ui.component
@@ -106,17 +106,11 @@ def _chat_panel(state: AgentState, agent: Agent):
             ),
             overflow="auto",
             flex_grow=1,
+            min_height=0,
             padding="size-100",
         )
     else:
-        history = ui.view(
-            ui.text(
-                "Ask me to build tables, plots, or dashboards. "
-                'For example: "Create a dashboard of World Cup statistics".'
-            ),
-            flex_grow=1,
-            padding="size-200",
-        )
+        history = ui.view(flex_grow=1, min_height=0)
 
     available_models = state.available_models
     if available_models:
@@ -124,21 +118,28 @@ def _chat_panel(state: AgentState, agent: Agent):
             *available_models,
             selected_key=state.model,
             on_change=lambda key: agent.set_model(str(key)),
-            aria_label="Model",
             label="Model",
             label_position="side",
+            is_quiet=True,
             is_disabled=busy,
-            width="size-3600",
+            width="size-3000",
         )
     else:
-        model_control = ui.text(f"Model: {state.model or 'unavailable'}")
+        model_control = ui.text(
+            f"Model: {state.model or 'unavailable'}", color="gray-500"
+        )
 
-    header = ui.flex(
-        model_control,
-        direction="row",
-        justify_content="end",
-        align_items="center",
-        gap="size-100",
+    help_control = ui.contextual_help(
+        heading="Using the agent",
+        content=ui.markdown(
+            "Ask me to build tables, plots, or dashboards. For example: "
+            '"Create a dashboard of World Cup statistics".\n\n'
+            "**Model** — choose which locally installed model handles your "
+            "requests. Smaller models respond faster; larger ones reason "
+            "better.\n\n"
+            "Results such as tables and figures appear in the **Output** panel."
+        ),
+        variant="info",
     )
 
     composer = ui.flex(
@@ -152,27 +153,62 @@ def _chat_panel(state: AgentState, agent: Agent):
         ),
         (
             ui.button(
-                "Stop",
+                ui.icon("debug_stop"),
                 on_press=lambda: agent.cancel(),
                 variant="negative",
+                aria_label="Stop",
             )
             if busy
             else ui.button(
-                "Send",
+                ui.icon("send"),
                 on_press=lambda: send(),
                 variant="accent",
+                aria_label="Send",
             )
         ),
         direction="row",
         gap="size-100",
         align_items="end",
+        flex_grow=0,
+    )
+
+    if busy:
+        status_control: Any = ui.flex(
+            ui.progress_circle(size="S", is_indeterminate=True, aria_label="Thinking"),
+            ui.text("Thinking…", color="gray-500"),
+            direction="row",
+            align_items="center",
+            gap="size-100",
+        )
+    else:
+        status_control = ui.view(flex_grow=1)
+
+    footer = ui.flex(
+        model_control,
+        ui.view(flex_grow=1),
+        status_control,
+        help_control,
+        direction="row",
+        align_items="center",
+        gap="size-100",
+        flex_grow=0,
+    )
+
+    # The composer and footer are pinned to the bottom (flex_grow=0) while the
+    # history above them grows and scrolls.
+    bottom_bar = ui.flex(
+        composer,
+        footer,
+        direction="column",
+        gap="size-100",
+        flex_grow=0,
+        flex_shrink=0,
     )
 
     return ui.panel(
         ui.flex(
-            header,
             history,
-            composer,
+            bottom_bar,
             direction="column",
             height="100%",
             gap="size-100",
