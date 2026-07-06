@@ -1,0 +1,80 @@
+# Docker Sandbox mixin kit for the deephaven-plugins repo.
+#
+# A "mixin" kit layers project setup onto any of the built-in sandbox agents,
+# so the same kit works for both Claude Code and GitHub Copilot:
+#
+#   sbx run claude  --kit ./sbx/deephaven-plugins
+#   sbx run copilot --kit ./sbx/deephaven-plugins
+#
+# The install command provisions the Python venv, installs JS + Python
+# dependencies, and builds/installs all plugins. See tools/sbx_setup.sh.
+#
+# Docs: https://docs.docker.com/ai/sandboxes/customize/kits/
+schemaVersion: '1'
+kind: mixin
+name: deephaven-plugins
+displayName: Deephaven Plugins
+description: >-
+  Development environment for the deephaven-plugins monorepo: Python venv, JS +
+  Python dependencies, and all plugins built and installed for a local
+  Deephaven server. End-to-end tests run through the same Dockerized Playwright
+  flow as CI.
+
+# Domains the setup and dev loop need. The default "Balanced" network policy
+# already permits most of these; listing them explicitly keeps the kit working
+# under the stricter "Locked Down" policy as well.
+caps:
+  network:
+    allow:
+      # Python packages
+      - pypi.org
+      - files.pythonhosted.org
+      # npm packages
+      - registry.npmjs.org
+      # Deephaven server image + Playwright image + plugin sources
+      - ghcr.io
+      - '*.githubusercontent.com'
+      - github.com
+      - mcr.microsoft.com
+      # Node version manager downloads (nvm install from .nvmrc)
+      - nodejs.org
+      - raw.githubusercontent.com
+
+# Runs once when the sandbox is created. Runs as the non-root `agent` user
+# (uid 1000) inside the mounted workspace.
+commands:
+  install:
+    - command: 'bash tools/sbx_setup.sh'
+      user: '1000'
+      description: Provision venv, install dependencies, build and install plugins
+
+# Appended to the agent's memory file (CLAUDE.md / AGENTS.md) so the agent knows
+# how to work in this repo.
+agentContext: |
+  ## Deephaven Plugins sandbox
+
+  The dev environment is provisioned by `tools/sbx_setup.sh` (run automatically
+  when this sandbox was created). Always activate the venv first:
+
+      source .venv/bin/activate
+
+  Common tasks (see README.md for full details):
+
+  - Build + install a plugin after code changes:
+      python tools/plugin_builder.py --reinstall <plugin>   # e.g. ui, plotly-express
+  - Start the Deephaven server so it is reachable from the host browser. It MUST
+    bind 0.0.0.0 for `sbx ports` forwarding to work:
+      python tools/plugin_builder.py -r -s -sa --host -sa 0.0.0.0 <plugin>
+    Then, from the HOST, publish the port and open the IDE:
+      sbx ports <sandbox-name> --publish 10000:10000
+      # http://localhost:10000/ide/
+  - Run end-to-end tests exactly like CI (Dockerized Playwright with pinned
+    image + fonts, so snapshots match). Docker runs inside this microVM:
+      npm run e2e:docker
+      npm run e2e:docker -- ./tests/ui_dialog.spec.ts   # single spec
+      npm run e2e:update-snapshots                        # regenerate snapshots
+  - JS unit tests:  npm run test:unit
+  - Python tests:   cd plugins/<plugin> && tox -e py3.12
+
+  Pushing to a git remote only works if a GitHub token was stored on the host
+  with `sbx secret set -g github` before the sandbox was created.

@@ -217,6 +217,92 @@ services:
       - /path/to/mydata/:/data
 ```
 
+### Running in a Docker Sandbox (sbx)
+
+For running AI coding agents (Claude Code, GitHub Copilot CLI, etc.) autonomously against this repo, you can use [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/). Each sandbox is an isolated microVM with its own Docker daemon, filesystem, and network, so an agent can install packages, build plugins, run the server, and even run the Dockerized end-to-end tests **without touching your host and without a privileged docker-in-docker container**. Because the sandbox is the security boundary, agents run with permissions auto-approved, so they can iterate without constant prompts.
+
+This repo ships a sandbox [mixin kit](https://docs.docker.com/ai/sandboxes/customize/kits/) at [./sbx/deephaven-plugins](./sbx/deephaven-plugins/spec.yaml) that provisions the environment (Python venv, JS + Python dependencies, and all plugins built and installed) via [./tools/sbx_setup.sh](./tools/sbx_setup.sh).
+
+#### Host prerequisites
+
+Install the `sbx` CLI on your host (the machine that will run the sandboxes):
+
+```shell
+# Linux (Ubuntu 24.04+). Requires KVM virtualization enabled.
+curl -fsSL https://get.docker.com | sudo REPO_ONLY=1 sh
+sudo apt-get install docker-sbx
+sudo usermod -aG kvm $USER   # then log out/in, or run: newgrp kvm
+
+# macOS (Apple silicon)
+brew trust docker/tap && brew install docker/tap/sbx
+
+# Windows 11 (requires Windows Hypervisor Platform)
+winget install -h Docker.sbx
+```
+
+Then sign in and choose a default network policy (`Balanced` is a good start):
+
+```shell
+sbx login
+```
+
+Docker Desktop is **not** required. See the [get started guide](https://docs.docker.com/ai/sandboxes/get-started/) for full system requirements.
+
+#### Agent credentials (optional)
+
+Credentials are stored on your host and injected by a proxy — they never enter the sandbox. Store them **before** creating a sandbox:
+
+```shell
+# Allow the agent to push branches / open PRs with your GitHub account
+sbx secret set -g github -t "$(gh auth token)"
+
+# Model provider key, e.g. for Claude Code (or use /login inside the agent)
+sbx secret set -g anthropic
+```
+
+For GitHub Copilot CLI, authenticate as described in its [documentation](https://github.com/github/copilot-cli).
+
+#### Running an agent
+
+From the repo directory on your host, launch the agent of your choice with the kit applied:
+
+```shell
+sbx run claude --kit ./sbx/deephaven-plugins
+# or
+sbx run copilot --kit ./sbx/deephaven-plugins
+```
+
+The first run pulls the agent image and runs the setup script; subsequent runs reconnect to the same sandbox in seconds. Use `sbx ls` to list sandboxes, `sbx stop <name>` to pause, and `sbx rm <name>` to delete one. Running `sbx` with no arguments opens an interactive dashboard.
+
+#### Opening the Deephaven IDE in your browser
+
+Start the server inside the sandbox, binding to `0.0.0.0` so the port can be forwarded:
+
+```shell
+python tools/plugin_builder.py -r -s -sa --host -sa 0.0.0.0 ui
+```
+
+Then, from your **host**, publish the port and open the IDE:
+
+```shell
+sbx ports <sandbox-name> --publish 10000:10000
+# open http://localhost:10000/ide/
+```
+
+#### Running end-to-end tests like CI
+
+Docker runs inside the sandbox's microVM, so the standard Dockerized Playwright flow works unchanged and produces snapshots that match CI (it uses the same pinned Playwright image and fonts):
+
+```shell
+npm run e2e:docker                              # all tests
+npm run e2e:docker -- ./tests/ui_dialog.spec.ts # a single spec
+npm run e2e:update-snapshots                    # regenerate snapshots
+```
+
+#### Using with VS Code
+
+In the default direct mode, the sandbox mounts your repo at the same path and shares the files with your host, so your normal VS Code window shows the agent's edits live as it works. Launch the agent with `sbx run ...` from the VS Code integrated terminal, and use `sbx exec -it <sandbox-name> bash` to open a shell inside the sandbox for running commands manually.
+
 ### Using plugin_builder.py
 
 The `tools/plugin_builder.py` script is a utility script that makes common plugin development cases easier.
