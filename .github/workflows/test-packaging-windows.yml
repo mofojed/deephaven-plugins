@@ -1,0 +1,75 @@
+# TEMPORARY: verifies package_js works cross-platform. Do not merge.
+name: Test Packaging Cross-Platform
+
+on:
+  push:
+    branches:
+      - test/windows-packaging
+  workflow_dispatch:
+
+jobs:
+  package-js:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      # origin/main before the fix
+      OLD_REF: 3607c41a2
+      UTILS_PATH: plugins/packaging/src/deephaven/plugin/packaging/utils.py
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Write test script
+        shell: bash
+        run: |
+          git show "$OLD_REF:$UTILS_PATH" > "$RUNNER_TEMP/old_utils.py"
+          cat > "$RUNNER_TEMP/check_package_js.py" <<'EOF'
+          import importlib.util, json, os, sys, tempfile
+
+          spec = importlib.util.spec_from_file_location("utils", sys.argv[1])
+          utils = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(utils)
+
+          root = tempfile.mkdtemp()
+          js_dir = os.path.join(root, "js")
+          os.makedirs(os.path.join(js_dir, "dist"))
+          with open(os.path.join(js_dir, "package.json"), "w") as f:
+              json.dump({"name": "test-pkg", "version": "0.0.1", "files": ["dist"]}, f)
+          with open(os.path.join(js_dir, "dist", "index.js"), "w") as f:
+              f.write("export default 1;\n")
+
+          dest_dir = os.path.join(root, "out")
+          utils.package_js(js_dir, dest_dir)
+
+          contents = sorted(os.listdir(dest_dir))
+          print("Unpacked:", contents)
+          assert os.path.isfile(os.path.join(dest_dir, "dist", "index.js")), contents
+          assert os.path.isfile(os.path.join(dest_dir, "package.json")), contents
+          print("OK")
+          EOF
+
+      - name: Old package_js (expected to fail on Windows)
+        id: old
+        continue-on-error: true
+        run: python "${{ runner.temp }}/check_package_js.py" "${{ runner.temp }}/old_utils.py"
+
+      - name: New package_js
+        run: python "${{ runner.temp }}/check_package_js.py" "${{ env.UTILS_PATH }}"
+
+      - name: Confirm old version reproduced the Windows failure
+        if: runner.os == 'Windows' && steps.old.outcome != 'failure'
+        run: |
+          echo "Expected the old package_js to fail on Windows"
+          exit 1
